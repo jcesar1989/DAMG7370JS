@@ -1,0 +1,36 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "adf-jcs-damg7370"
+		},
+		"AzureKeyVault1_properties_typeProperties_baseUrl": {
+			"value": "https://jcs-demoadf.vault.azure.net/"
+		},
+		"ls_snowflake_chinook_db_properties_typeProperties_database": {
+			"value": "@{linkedService().Database}"
+		},
+		"ls_snowflake_chinook_db_properties_typeProperties_role": {
+			"value": "@{linkedService().Role}"
+		},
+		"ls_snowflake_chinook_db_properties_typeProperties_host": {
+			"value": "@{linkedService().Host}"
+		},
+		"ls_sqldb_jcs_properties_typeProperties_server": {
+			"value": "@{linkedService().Domainname}"
+		},
+		"ls_sqldb_jcs_properties_typeProperties_database": {
+			"value": "DAMG7370FALL2025"
+		},
+		"ls_sqldb_jcs_properties_typeProperties_userName": {
+			"value": "@{linkedService().Username}"
+		},
+		"ls_storage_azure_blob_properties_typeProperties_serviceEndpoint": {
+			"value": "https://stgdamghw7370.blob.core.windows.net/"
+		},
+		"ls_storage_sas_auth_sasUri": {
+			"value": ""
+		}
+	}
+}
