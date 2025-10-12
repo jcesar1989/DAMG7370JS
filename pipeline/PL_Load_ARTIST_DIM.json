@@ -1,0 +1,44 @@
+{
+	"name": "PL_Load_ARTIST_DIM",
+	"properties": {
+		"activities": [
+			{
+				"name": "Load_Artist_Dimension",
+				"type": "Script",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.10:00:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "ls_snowflake_chinook_db",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"Account": "QLHNMEQ-RTA20152",
+						"Database": "chinook_db",
+						"Warehouse": "COMPUTE_WH",
+						"Username": "SEPULVEDAJU",
+						"Role": "ACCOUNTADMIN",
+						"Host": "QLHNMEQ-RTA20152.snowflakecomputing.com"
+					}
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "NonQuery",
+							"text": "MERGE INTO CHINOOK_DB.DW.ARTIST_DIM AS target\r\nUSING (\r\n    SELECT \r\n        artistid,\r\n        name,\r\n        'CHINOOK' AS source_id,\r\n        ROW_NUMBER() OVER (ORDER BY artistid) + \r\n        COALESCE((SELECT MAX(ARTIST_KEY) FROM CHINOOK_DB.DW.ARTIST_DIM), 0) AS new_key\r\n    FROM CHINOOK_DB.STAGE.ARTIST\r\n) AS source\r\nON target.ARTIST_ID = source.artistid\r\n\r\nWHEN MATCHED AND (\r\n    COALESCE(target.ARTIST_NAME, '') <> COALESCE(source.name, '')\r\n) THEN\r\n    UPDATE SET\r\n        target.ARTIST_NAME = source.name,\r\n        target.DATE_TO_WAREHOUSE = CURRENT_TIMESTAMP()\r\n\r\nWHEN NOT MATCHED THEN\r\n    INSERT (\r\n        ARTIST_KEY,\r\n        ARTIST_ID,\r\n        ARTIST_NAME,\r\n        SOURCE_ID,\r\n        DATE_TO_WAREHOUSE\r\n    )\r\n    VALUES (\r\n        source.new_key,\r\n        source.artistid,\r\n        source.name,\r\n        source.source_id,\r\n        CURRENT_TIMESTAMP()\r\n    );"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2025-10-12T06:32:47Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,121 @@
+{
+	"name": "extract_db_sql",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEachDsTable",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.table_array",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 6,
+					"activities": [
+						{
+							"name": "parque_extract",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"sqlReaderQuery": {
+										"value": "SELECT \n    *,\n    'Julio Sepulveda' AS Created_by,\n    FORMAT(GETDATE(), 'yyyy-MM-dd') AS Created_dt\nFROM chinook.[@{item()}]",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobStorageWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"logSettings": {
+									"enableCopyActivityLog": true,
+									"copyActivityLogSettings": {
+										"logLevel": "Warning",
+										"enableReliableLogging": false
+									},
+									"logLocationSettings": {
+										"linkedServiceName": {
+											"referenceName": "ls_storage_azure_blob",
+											"type": "LinkedServiceReference"
+										}
+									}
+								},
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "sqlserver_table_ds",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema_name": "chinook",
+										"table_name": {
+											"value": "@item()",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "Parquet_ds",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": "stagedata2",
+										"folder_name": "fileupload",
+										"file_name": {
+											"value": "@concat(item(),'.parquet')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"table_array": {
+				"type": "array",
+				"defaultValue": [
+					"Artist",
+					"Album",
+					"Customer",
+					"Invoice",
+					"InvoiceLine",
+					"Genre"
+				]
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-10-11T23:48:26Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

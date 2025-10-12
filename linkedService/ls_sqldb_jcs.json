@@ -1,0 +1,41 @@
+{
+	"name": "ls_sqldb_jcs",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"parameters": {
+			"Domainname": {
+				"type": "String",
+				"defaultValue": "CESAR\\MSSQLSERVER01"
+			},
+			"Username": {
+				"type": "String",
+				"defaultValue": "fall2025"
+			}
+		},
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"server": "@{linkedService().Domainname}",
+			"database": "DAMG7370FALL2025",
+			"encrypt": "True",
+			"trustServerCertificate": true,
+			"authenticationType": "SQL",
+			"userName": "@{linkedService().Username}",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "AzureKeyVault1",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "sqlserver-credentials"
+			},
+			"pooling": "False",
+			"multipleActiveResultSets": "False",
+			"commandTimeout": "30"
+		},
+		"connectVia": {
+			"referenceName": "integrationRuntime1",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

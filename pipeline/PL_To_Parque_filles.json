@@ -1,0 +1,108 @@
+{
+	"name": "PL_To_Parque_filles",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEachTable",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.table_name",
+						"type": "Expression"
+					},
+					"batchCount": 6,
+					"activities": [
+						{
+							"name": "Parque_2_snowflake",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "ParquetSource",
+									"storeSettings": {
+										"type": "AzureBlobStorageReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "ParquetReadSettings"
+									}
+								},
+								"sink": {
+									"type": "SnowflakeV2Sink",
+									"importSettings": {
+										"type": "SnowflakeImportCopyCommand"
+									}
+								},
+								"enableStaging": true,
+								"stagingSettings": {
+									"linkedServiceName": {
+										"referenceName": "ls_storage_sas_auth",
+										"type": "LinkedServiceReference"
+									},
+									"path": "stagedata2"
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "Parquet_ds",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": "stagedata2",
+										"folder_name": "fileupload",
+										"file_name": {
+											"value": "@concat(item(),'.parquet')",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "snowflake_chinook_ds",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema_name": "STAGE",
+										"table_name": {
+											"value": "@toUpper(item())",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"folder_name": {
+				"type": "string"
+			},
+			"table_name": {
+				"type": "array",
+				"defaultValue": [
+					"Artist",
+					"Album",
+					"Customer",
+					"Invoice",
+					"InvoiceLine",
+					"Genre"
+				]
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-10-12T14:42:54Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

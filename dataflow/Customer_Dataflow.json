@@ -1,0 +1,186 @@
+{
+	"name": "Customer_Dataflow",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "snowflake_chinook_ds",
+						"type": "DatasetReference"
+					},
+					"name": "CustomerStage"
+				},
+				{
+					"dataset": {
+						"referenceName": "snowflake_chinook_ds",
+						"type": "DatasetReference"
+					},
+					"name": "sourceCustomerDIm"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "snowflake_chinook_ds",
+						"type": "DatasetReference"
+					},
+					"name": "FinalStageSnowFlake"
+				}
+			],
+			"transformations": [
+				{
+					"name": "addhash"
+				},
+				{
+					"name": "joinstagetarget"
+				},
+				{
+					"name": "filterchanged"
+				},
+				{
+					"name": "alterRowRules"
+				},
+				{
+					"name": "addsurrogateKey"
+				},
+				{
+					"name": "select1"
+				},
+				{
+					"name": "AddAuditColumns"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     table_name as string ('CUSTOMER_DIM')",
+				"}",
+				"source(output(",
+				"          CUSTOMERID as decimal(38,0),",
+				"          FIRSTNAME as string,",
+				"          LASTNAME as string,",
+				"          COMPANY as string,",
+				"          ADDRESS as string,",
+				"          CITY as string,",
+				"          STATE as string,",
+				"          COUNTRY as string,",
+				"          POSTALCODE as string,",
+				"          PHONE as string,",
+				"          FAX as string,",
+				"          EMAIL as string,",
+				"          SUPPORTREPID as decimal(38,0),",
+				"          CREATED_BY as string,",
+				"          CREATED_DT as date",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table') ~> CustomerStage",
+				"source(output(",
+				"          CUSTOMER_KEY as decimal(10,0),",
+				"          CUSTOMER_ID as decimal(10,0),",
+				"          FIRST_NAME as string,",
+				"          LAST_NAME as string,",
+				"          COMPANY_NAME as string,",
+				"          CITY as string,",
+				"          STATE as string,",
+				"          COUNTRY as string,",
+				"          ZIP_CODE as string,",
+				"          EMPLOYEE_ID as decimal(10,0),",
+				"          IS_ACTIVE as string,",
+				"          SOURCE_ID as string,",
+				"          DATE_TO_WAREHOUSE as timestamp,",
+				"          ROW_HASH as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table') ~> sourceCustomerDIm",
+				"CustomerStage derive(source_hash_value = md5(\r",
+				"    concat(\r",
+				"        toString('CUSTOMERID'),\r",
+				"        toString('FIRSTNAME'),\r",
+				"        toString('LASTNAME'),\r",
+				"        toString('COMPANY'),\r",
+				"        toString('ADDRESS'),\r",
+				"        toString('CITY'),\r",
+				"        toString('STATE')\r",
+				"    )\r",
+				")) ~> addhash",
+				"addhash, sourceCustomerDIm join(CUSTOMERID == CUSTOMER_ID,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'right')~> joinstagetarget",
+				"joinstagetarget filter(isNull(ROW_HASH) || source_hash_value != ROW_HASH) ~> filterchanged",
+				"filterchanged alterRow(insertIf(isNull(ROW_HASH)),",
+				"     updateIf(!isNull(ROW_HASH))) ~> alterRowRules",
+				"select1 keyGenerate(output(CUSTOMER_KEY as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> addsurrogateKey",
+				"alterRowRules select(mapColumn(",
+				"          CUSTOMER_ID = CUSTOMERID,",
+				"          FIRSTNAME,",
+				"          LASTNAME,",
+				"          COMPANY,",
+				"          ADDRESS,",
+				"          CITY = CustomerStage@CITY,",
+				"          STATE = CustomerStage@STATE,",
+				"          COUNTRY = CustomerStage@COUNTRY,",
+				"          POSTALCODE,",
+				"          PHONE,",
+				"          FAX,",
+				"          EMAIL,",
+				"          SUPPORTREPID,",
+				"          CREATED_BY,",
+				"          CREATED_DT,",
+				"          SOURCE_HASH_VALUE = source_hash_value,",
+				"          CUSTOMER_KEY,",
+				"          CUSTOMER_ID,",
+				"          FIRST_NAME,",
+				"          LAST_NAME,",
+				"          COMPANY_NAME,",
+				"          CITY = sourceCustomerDIm@CITY,",
+				"          STATE = sourceCustomerDIm@STATE,",
+				"          COUNTRY = sourceCustomerDIm@COUNTRY,",
+				"          ZIP_CODE,",
+				"          EMPLOYEE_ID,",
+				"          IS_ACTIVE,",
+				"          SOURCE_ID,",
+				"          DATE_TO_WAREHOUSE,",
+				"          ROW_HASH",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"addsurrogateKey derive(IS_ACTIVE = 'Y',",
+				"          SOURCE_ID = 'CHINOOK',",
+				"          DATE_TO_WAREHOUSE = currentTimestamp()) ~> AddAuditColumns",
+				"AddAuditColumns sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:true,",
+				"     upsertable:false,",
+				"     keys:['CUSTOMER_KEY'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     stageInsert: true,",
+				"     mapColumn(",
+				"          CUSTOMER_ID,",
+				"          FIRST_NAME = FIRSTNAME,",
+				"          LAST_NAME = LASTNAME,",
+				"          COMPANY_NAME = COMPANY,",
+				"          CITY,",
+				"          STATE,",
+				"          COUNTRY,",
+				"          ZIP_CODE = POSTALCODE,",
+				"          EMPLOYEE_ID = SUPPORTREPID,",
+				"          ROW_HASH = SOURCE_HASH_VALUE,",
+				"          CUSTOMER_KEY,",
+				"          IS_ACTIVE,",
+				"          SOURCE_ID,",
+				"          DATE_TO_WAREHOUSE",
+				"     )) ~> FinalStageSnowFlake"
+			]
+		}
+	}
+}

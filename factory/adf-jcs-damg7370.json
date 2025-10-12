@@ -1,0 +1,9 @@
+{
+	"name": "adf-jcs-damg7370",
+	"location": "eastus2",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "6c963abb-088a-436b-bf40-fc36579a07d6",
+		"tenantId": "a8eec281-aaa3-4dae-ac9b-9a398b9215e7"
+	}
+}
