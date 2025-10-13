@@ -151,7 +151,10 @@
 						"parameters": {
 							"container_name": "stageteamdata",
 							"folder_name": "folder",
-							"file_name": "Seattle_Pet_Licenses_20251012.csv"
+							"file_name": {
+								"value": "@concat('.parquet')",
+								"type": "Expression"
+							}
 						}
 					}
 				]
