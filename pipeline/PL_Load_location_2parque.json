@@ -59,7 +59,7 @@
 							"container_name": "stageteamdata",
 							"folder_name": "folder",
 							"file_name": {
-								"value": "@concat('petlicense.parquet')",
+								"value": "@concat('location.parquet')",
 								"type": "Expression"
 							}
 						}
