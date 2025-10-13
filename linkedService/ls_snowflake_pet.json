@@ -1,6 +1,5 @@
 {
 	"name": "ls_snowflake_pet",
-	"type": "Microsoft.DataFactory/factories/linkedservices",
 	"properties": {
 		"parameters": {
 			"Account": {
@@ -48,5 +47,6 @@
 			}
 		},
 		"version": "1.1"
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/linkedservices"
 }
