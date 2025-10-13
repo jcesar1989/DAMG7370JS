@@ -126,7 +126,7 @@
 									"physicalType": "String"
 								},
 								"sink": {
-									"name": "ZipCode",
+									"name": "Zip_Code",
 									"physicalType": "UTF8"
 								}
 							}
