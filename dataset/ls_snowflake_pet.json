@@ -1,0 +1,20 @@
+{
+	"name": "ls_snowflake_pet",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_snowflake_pet",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"Account": "QLHNMEQ-RTA20152",
+				"Database": "pet_db",
+				"Warehouse": "COMPUTE_WH",
+				"Username": "SEPULVEDAJU",
+				"Role": "ACCOUNTADMIN",
+				"Host": "QLHNMEQ-RTA20152.snowflakecomputing.com"
+			}
+		},
+		"annotations": [],
+		"type": "SnowflakeV2Table",
+		"schema": []
+	}
+}
