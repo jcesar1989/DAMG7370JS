@@ -25,6 +25,16 @@
 		},
 		"annotations": [],
 		"type": "SnowflakeV2Table",
-		"schema": []
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().schema_name",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().table_name",
+				"type": "Expression"
+			}
+		}
 	}
 }
