@@ -10,6 +10,13 @@
 						"type": "DatasetReference"
 					},
 					"name": "locationsource"
+				},
+				{
+					"dataset": {
+						"referenceName": "Parquet2snowflake",
+						"type": "DatasetReference"
+					},
+					"name": "petlicensesource"
 				}
 			],
 			"sinks": [
@@ -19,11 +26,21 @@
 						"type": "DatasetReference"
 					},
 					"name": "LocationStage"
+				},
+				{
+					"dataset": {
+						"referenceName": "ls_snowflake_pet",
+						"type": "DatasetReference"
+					},
+					"name": "Petstage"
 				}
 			],
 			"transformations": [
 				{
-					"name": "derivedColumn1"
+					"name": "addtimeANDsource"
+				},
+				{
+					"name": "addtimesource"
 				}
 			],
 			"scriptLines": [
@@ -41,9 +58,26 @@
 				"     ignoreNoFilesFound: false,",
 				"     format: 'parquet',",
 				"     wildcardPaths:['folder/location.parquet']) ~> locationsource",
+				"source(output(",
+				"          License_Issue_Date as string,",
+				"          License_Number as string,",
+				"          Animal_Name as string,",
+				"          Species as string,",
+				"          Primary_Breed as string,",
+				"          Secondary_Breed as string,",
+				"          Zip_Code as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet',",
+				"     wildcardPaths:['folder/petlicense.parquet']) ~> petlicensesource",
 				"locationsource derive(LOAD_TIMESTAMP = currentTimestamp(),",
-				"          SOURCE_FILE_NAME = 'Location') ~> derivedColumn1",
-				"derivedColumn1 sink(allowSchemaDrift: true,",
+				"          SOURCE_FILE_NAME = 'Location') ~> addtimeANDsource",
+				"petlicensesource derive(License_Issue_Date = toString(toDate(License_Issue_Date, 'dd-MMM-yy'), 'yyyy-MM-dd'),",
+				"          LOAD_TIMESTAMP = currentTimestamp(),",
+				"          SOURCE_FILE_NAME = 'Petlicense') ~> addtimesource",
+				"addtimeANDsource sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     deletable:false,",
 				"     insertable:true,",
@@ -62,7 +96,28 @@
 				"          CITY = city,",
 				"          LOAD_TIMESTAMP,",
 				"          SOURCE_FILE_NAME",
-				"     )) ~> LocationStage"
+				"     )) ~> LocationStage",
+				"addtimesource sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     stageInsert: true,",
+				"     mapColumn(",
+				"          LICENSE_ISSUE_DATE = License_Issue_Date,",
+				"          LICENSE_NUMBER = License_Number,",
+				"          ANIMAL_NAME = Animal_Name,",
+				"          SPECIES = Species,",
+				"          PRIMARY_BREED = Primary_Breed,",
+				"          SECONDARY_BREED = Secondary_Breed,",
+				"          ZIP_CODE = Zip_Code,",
+				"          LOAD_TIMESTAMP,",
+				"          SOURCE_FILE_NAME",
+				"     )) ~> Petstage"
 			]
 		}
 	}
