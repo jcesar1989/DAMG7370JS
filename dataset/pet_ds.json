@@ -14,6 +14,7 @@
 			"location": {
 				"type": "AzureBlobStorageLocation",
 				"fileName": "Seattle_Pet_Licenses_20251012.csv",
+				"folderPath": "folder",
 				"container": "stageteamdata"
 			},
 			"columnDelimiter": ",",
