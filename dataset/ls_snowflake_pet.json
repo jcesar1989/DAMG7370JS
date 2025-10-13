@@ -23,6 +23,9 @@
 				"defaultValue": "LOCATION"
 			}
 		},
+		"folder": {
+			"name": "Individual_Project"
+		},
 		"annotations": [],
 		"type": "SnowflakeV2Table",
 		"schema": [],

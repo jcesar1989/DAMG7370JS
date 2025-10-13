@@ -19,6 +19,9 @@
 				"defaultValue": "invoice"
 			}
 		},
+		"folder": {
+			"name": "Individual_Project"
+		},
 		"annotations": [],
 		"type": "Parquet",
 		"typeProperties": {

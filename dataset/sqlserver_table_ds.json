@@ -19,6 +19,9 @@
 				"defaultValue": "Customer"
 			}
 		},
+		"folder": {
+			"name": "Individual_Project"
+		},
 		"annotations": [],
 		"type": "SqlServerTable",
 		"schema": [],
