@@ -1,5 +1,5 @@
 {
-	"name": "DelimitedText1",
+	"name": "location_ds",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "ls_storage_azure_blob",
