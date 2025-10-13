@@ -13,6 +13,16 @@
 				"Host": "QLHNMEQ-RTA20152.snowflakecomputing.com"
 			}
 		},
+		"parameters": {
+			"schema_name": {
+				"type": "string",
+				"defaultValue": "STAGE"
+			},
+			"table_name": {
+				"type": "string",
+				"defaultValue": "LOCATION"
+			}
+		},
 		"annotations": [],
 		"type": "SnowflakeV2Table",
 		"schema": []

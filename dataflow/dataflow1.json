@@ -22,7 +22,7 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "snowflake_chinook_ds",
+						"referenceName": "ls_snowflake_pet",
 						"type": "DatasetReference"
 					},
 					"name": "sink1"
@@ -65,7 +65,17 @@
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     stageInsert: true) ~> sink1"
+				"     stageInsert: true,",
+				"     mapColumn(",
+				"          state_fips,",
+				"          state,",
+				"          state_abbr,",
+				"          zipcode,",
+				"          county,",
+				"          city,",
+				"          LOAD_TIMESTAMP,",
+				"          SOURCE_FILE_NAME",
+				"     )) ~> sink1"
 			]
 		}
 	}
