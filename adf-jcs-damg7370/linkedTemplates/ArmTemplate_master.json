@@ -23,6 +23,18 @@
 			"type": "string",
 			"defaultValue": "@{linkedService().Host}"
 		},
+		"ls_snowflake_pet_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "@{linkedService().Database}"
+		},
+		"ls_snowflake_pet_properties_typeProperties_role": {
+			"type": "string",
+			"defaultValue": "@{linkedService().Role}"
+		},
+		"ls_snowflake_pet_properties_typeProperties_host": {
+			"type": "string",
+			"defaultValue": "@{linkedService().Host}"
+		},
 		"ls_sqldb_jcs_properties_typeProperties_server": {
 			"type": "string",
 			"defaultValue": "@{linkedService().Domainname}"
@@ -88,6 +100,15 @@
 					"ls_snowflake_chinook_db_properties_typeProperties_host": {
 						"value": "[parameters('ls_snowflake_chinook_db_properties_typeProperties_host')]"
 					},
+					"ls_snowflake_pet_properties_typeProperties_database": {
+						"value": "[parameters('ls_snowflake_pet_properties_typeProperties_database')]"
+					},
+					"ls_snowflake_pet_properties_typeProperties_role": {
+						"value": "[parameters('ls_snowflake_pet_properties_typeProperties_role')]"
+					},
+					"ls_snowflake_pet_properties_typeProperties_host": {
+						"value": "[parameters('ls_snowflake_pet_properties_typeProperties_host')]"
+					},
 					"ls_sqldb_jcs_properties_typeProperties_server": {
 						"value": "[parameters('ls_sqldb_jcs_properties_typeProperties_server')]"
 					},
@@ -100,6 +121,26 @@
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "adf-jcs-damg7370_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'adf-jcs-damg7370_ArmTemplate_0')]"
+			]
 		}
 	]
 }

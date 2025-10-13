@@ -17,6 +17,15 @@
 		"ls_snowflake_chinook_db_properties_typeProperties_host": {
 			"value": "@{linkedService().Host}"
 		},
+		"ls_snowflake_pet_properties_typeProperties_database": {
+			"value": "@{linkedService().Database}"
+		},
+		"ls_snowflake_pet_properties_typeProperties_role": {
+			"value": "@{linkedService().Role}"
+		},
+		"ls_snowflake_pet_properties_typeProperties_host": {
+			"value": "@{linkedService().Host}"
+		},
 		"ls_sqldb_jcs_properties_typeProperties_server": {
 			"value": "@{linkedService().Domainname}"
 		},
