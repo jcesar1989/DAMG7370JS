@@ -10,13 +10,6 @@
 						"type": "DatasetReference"
 					},
 					"name": "locationsource"
-				},
-				{
-					"dataset": {
-						"referenceName": "Parquet2snowflake",
-						"type": "DatasetReference"
-					},
-					"name": "petsource"
 				}
 			],
 			"sinks": [
@@ -48,12 +41,6 @@
 				"     ignoreNoFilesFound: false,",
 				"     format: 'parquet',",
 				"     wildcardPaths:['folder/location.parquet']) ~> locationsource",
-				"source(allowSchemaDrift: true,",
-				"     validateSchema: false,",
-				"     inferDriftedColumnTypes: true,",
-				"     ignoreNoFilesFound: false,",
-				"     format: 'parquet',",
-				"     wildcardPaths:['folder/petlicense.parquet']) ~> petsource",
 				"locationsource derive(LOAD_TIMESTAMP = currentTimestamp(),",
 				"          SOURCE_FILE_NAME = 'Location') ~> derivedColumn1",
 				"derivedColumn1 sink(allowSchemaDrift: true,",
