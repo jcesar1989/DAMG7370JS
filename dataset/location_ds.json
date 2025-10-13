@@ -14,7 +14,7 @@
 			"location": {
 				"type": "AzureBlobStorageLocation",
 				"fileName": "geo-data.csv",
-				"folderPath": "folder/location",
+				"folderPath": "folder",
 				"container": "stageteamdata"
 			},
 			"columnDelimiter": ",",
