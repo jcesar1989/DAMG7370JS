@@ -18,7 +18,7 @@
 						"referenceName": "ls_snowflake_pet",
 						"type": "DatasetReference"
 					},
-					"name": "sink1"
+					"name": "LocationStage"
 				}
 			],
 			"transformations": [
@@ -62,7 +62,7 @@
 				"          CITY = city,",
 				"          LOAD_TIMESTAMP,",
 				"          SOURCE_FILE_NAME",
-				"     )) ~> sink1"
+				"     )) ~> LocationStage"
 			]
 		}
 	}
