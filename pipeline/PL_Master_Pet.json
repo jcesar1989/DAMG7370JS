@@ -180,6 +180,14 @@
 								"container_name": "stageteamdata",
 								"folder_name": "folder",
 								"file_name": "petlicense.parquet"
+							},
+							"LocationStage": {
+								"schema_name": "STAGE",
+								"table_name": "LOCATION"
+							},
+							"Petstage": {
+								"schema_name": "STAGE",
+								"table_name": "PET_LICENSE"
 							}
 						}
 					},
