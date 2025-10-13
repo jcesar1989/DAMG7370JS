@@ -152,7 +152,7 @@
 							"container_name": "stageteamdata",
 							"folder_name": "folder",
 							"file_name": {
-								"value": "@concat('.parquet')",
+								"value": "@concat('petlicense.parquet')",
 								"type": "Expression"
 							}
 						}
