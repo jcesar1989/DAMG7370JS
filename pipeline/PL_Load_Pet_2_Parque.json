@@ -17,6 +17,11 @@
 				"typeProperties": {
 					"source": {
 						"type": "DelimitedTextSource",
+						"additionalColumns": [
+							{
+								"value": "$$FILEPATH"
+							}
+						],
 						"storeSettings": {
 							"type": "AzureBlobStorageReadSettings",
 							"recursive": true,
@@ -60,7 +65,14 @@
 								"value": "@pipeline().parameters.Container_name",
 								"type": "Expression"
 							},
-							"file_name": "invoice"
+							"folder_name": {
+								"value": "@pipeline().parameters.Folder_path",
+								"type": "Expression"
+							},
+							"file_name": {
+								"value": "@pipeline().parameters.file_name",
+								"type": "Expression"
+							}
 						}
 					}
 				]
@@ -70,6 +82,14 @@
 			"Container_name": {
 				"type": "string",
 				"defaultValue": "Stageteamdata"
+			},
+			"Folder_path": {
+				"type": "string",
+				"defaultValue": "folder"
+			},
+			"file_name": {
+				"type": "string",
+				"defaultValue": "Seattle_Pet_Licenses_20251012.csv"
 			}
 		},
 		"annotations": []
