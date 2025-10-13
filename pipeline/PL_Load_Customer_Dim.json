@@ -18,6 +18,9 @@
 					"dataflow": {
 						"referenceName": "Customer_Dataflow",
 						"type": "DataFlowReference",
+						"parameters": {
+							"table_name": "'CUSTOMER_DIM'"
+						},
 						"datasetParameters": {
 							"CustomerStage": {
 								"schema_name": "STAGE",
