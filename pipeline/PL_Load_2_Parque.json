@@ -1,9 +1,9 @@
 {
-	"name": "pipeline1",
+	"name": "PL_Load_2_Parque",
 	"properties": {
 		"activities": [
 			{
-				"name": "Copy data1",
+				"name": "csv2parque",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
@@ -157,6 +157,9 @@
 				]
 			}
 		],
+		"folder": {
+			"name": "Team_Project_Pet"
+		},
 		"annotations": []
 	}
 }
