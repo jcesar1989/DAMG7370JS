@@ -175,6 +175,11 @@
 								"container_name": "stageteamdata",
 								"folder_name": "folder",
 								"file_name": "location.parquet"
+							},
+							"petlicensesource": {
+								"container_name": "stageteamdata",
+								"folder_name": "folder",
+								"file_name": "petlicense.parquet"
 							}
 						}
 					},
