@@ -161,7 +161,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "dataflow1",
+						"referenceName": "Load_pet_location_Dataflow",
 						"type": "DataFlowReference",
 						"datasetParameters": {
 							"locationsource": {
