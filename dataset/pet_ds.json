@@ -5,6 +5,9 @@
 			"referenceName": "ls_storage_azure_blob",
 			"type": "LinkedServiceReference"
 		},
+		"folder": {
+			"name": "Team_Project_Pet"
+		},
 		"annotations": [],
 		"type": "DelimitedText",
 		"typeProperties": {
