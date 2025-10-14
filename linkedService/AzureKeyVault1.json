@@ -5,7 +5,7 @@
 		"annotations": [],
 		"type": "AzureKeyVault",
 		"typeProperties": {
-			"baseUrl": "https://jcs-demoadf.vault.azure.net/"
+			"baseUrl": "https://kv-damg7370.vault.azure.net/"
 		}
 	}
 }
