@@ -43,9 +43,6 @@
 				}
 			],
 			"scriptLines": [
-				"parameters{",
-				"     Schema_Name as string",
-				"}",
 				"source(output(",
 				"          LICENSE_ID as decimal(38,0),",
 				"          LICENSE_ISSUE_DATE as date,",
@@ -113,14 +110,7 @@
 				"          PRIMARY_BREED = aggregate1@PRIMARY_BREED,",
 				"          SECONDARY_BREED = aggregate1@SECONDARY_BREED,",
 				"          SOURCE_FILE_NAME = aggregate1@SOURCE_FILE_NAME,",
-				"          LOAD_TIMESTAMP = aggregate1@LOAD_TIMESTAMP,",
-				"          BREED_KEY,",
-				"          BREED_ID = BreedDim@BREED_ID,",
-				"          SPECIES_NAME,",
-				"          PRIMARY_BREED = BreedDim@PRIMARY_BREED,",
-				"          SECONDARY_BREED = BreedDim@SECONDARY_BREED,",
-				"          LOAD_TIMESTAMP = BreedDim@LOAD_TIMESTAMP,",
-				"          SOURCE_FILE_NAME = BreedDim@SOURCE_FILE_NAME",
+				"          LOAD_TIMESTAMP = aggregate1@LOAD_TIMESTAMP",
 				"     )) ~> sink1"
 			]
 		}
