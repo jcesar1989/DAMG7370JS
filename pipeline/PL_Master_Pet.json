@@ -354,6 +354,47 @@
 						}
 					}
 				]
+			},
+			{
+				"name": "Load_Dim_Date",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "LoadSTGtables",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "ls_snowflake_pet",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"Account": "QLHNMEQ-RTA20152",
+						"Database": "pet_db",
+						"Warehouse": "COMPUTE_WH",
+						"Username": "SEPULVEDAJU",
+						"Role": "ACCOUNTADMIN",
+						"Host": "QLHNMEQ-RTA20152.snowflakecomputing.com"
+					}
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "USE SCHEMA DW;\nMERGE INTO DATE_DIM AS tgt\nUSING (\n    WITH DATE_RANGE AS (\n        SELECT \n            DATEADD(DAY, SEQ4(), '2010-01-01')::DATE AS FULL_DATE\n        FROM TABLE(GENERATOR(ROWCOUNT => 7305))  -- 20 years of dates (2010-2030)\n    )\n    SELECT \n        TO_NUMBER(TO_CHAR(FULL_DATE, 'YYYYMMDD')) AS DATE_KEY,\n        FULL_DATE,\n        DAYOFWEEK(FULL_DATE) AS DAY_OF_WEEK,\n        DAYNAME(FULL_DATE) AS DAY_NAME,\n        DAY(FULL_DATE) AS DAY_OF_MONTH,\n        DAYOFYEAR(FULL_DATE) AS DAY_OF_YEAR,\n        WEEKOFYEAR(FULL_DATE) AS WEEK_OF_YEAR,\n        MONTH(FULL_DATE) AS MONTH_NUMBER,\n        MONTHNAME(FULL_DATE) AS MONTH_NAME,\n        TO_CHAR(FULL_DATE, 'MON') AS MONTH_ABBR,\n        QUARTER(FULL_DATE) AS QUARTER,\n        CONCAT('Q', QUARTER(FULL_DATE)) AS QUARTER_NAME,\n        YEAR(FULL_DATE) AS YEAR,\n        CASE \n            WHEN MONTH(FULL_DATE) >= 7 THEN YEAR(FULL_DATE) + 1\n            ELSE YEAR(FULL_DATE)\n        END AS FISCAL_YEAR,\n        CASE WHEN DAYOFWEEK(FULL_DATE) IN (0, 6) THEN TRUE ELSE FALSE END AS IS_WEEKEND,\n        FALSE AS IS_HOLIDAY  -- Update manually or with holiday logic\n    FROM DATE_RANGE\n) AS src\nON tgt.DATE_KEY = src.DATE_KEY\nWHEN NOT MATCHED THEN\n    INSERT (\n        DATE_KEY,\n        FULL_DATE,\n        DAY_OF_WEEK,\n        DAY_NAME,\n        DAY_OF_MONTH,\n        DAY_OF_YEAR,\n        WEEK_OF_YEAR,\n        MONTH_NUMBER,\n        MONTH_NAME,\n        MONTH_ABBR,\n        QUARTER,\n        QUARTER_NAME,\n        YEAR,\n        FISCAL_YEAR,\n        IS_WEEKEND,\n        IS_HOLIDAY,\n        LOAD_TIMESTAMP,\n        SOURCE_FILE_NAME\n    )\n    VALUES (\n        src.DATE_KEY,\n        src.FULL_DATE,\n        src.DAY_OF_WEEK,\n        src.DAY_NAME,\n        src.DAY_OF_MONTH,\n        src.DAY_OF_YEAR,\n        src.WEEK_OF_YEAR,\n        src.MONTH_NUMBER,\n        src.MONTH_NAME,\n        src.MONTH_ABBR,\n        src.QUARTER,\n        src.QUARTER_NAME,\n        src.YEAR,\n        src.FISCAL_YEAR,\n        src.IS_WEEKEND,\n        src.IS_HOLIDAY,\n        CURRENT_TIMESTAMP(),\n        'ADF_DATE_DIM_LOAD'\n    );\n\n"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
 			}
 		],
 		"folder": {
