@@ -26,6 +26,12 @@
 				},
 				{
 					"name": "BreedID"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "alterRow1"
 				}
 			],
 			"scriptLines": [
@@ -64,7 +70,21 @@
 				"          SECONDARY_BREED = first(SECONDARY_BREED),",
 				"          SOURCE_FILE_NAME = first(SOURCE_FILE_NAME),",
 				"          LOAD_TIMESTAMP = first(LOAD_TIMESTAMP)) ~> aggregate1",
-				"stagepet derive(BREED_ID = sha2(256, concat(     coalesce(SPECIES, ''),     '-',     coalesce(PRIMARY_BREED, ''),     '-',     coalesce(SECONDARY_BREED, '') ))) ~> BreedID"
+				"stagepet derive(BREED_ID = sha2(256, concat(\r",
+				"    coalesce(SPECIES, ''),\r",
+				"    '-',\r",
+				"    coalesce(PRIMARY_BREED, ''),\r",
+				"    '-',\r",
+				"    coalesce(SECONDARY_BREED, '')\r",
+				"))\r",
+				") ~> BreedID",
+				"aggregate1, BreedDim join(aggregate1@BREED_ID == BreedDim@BREED_ID,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 alterRow(insertIf(isNull(BREED_KEY)),",
+				"     updateIf(!isNull(BREED_KEY))) ~> alterRow1"
 			]
 		}
 	}
