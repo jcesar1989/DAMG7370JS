@@ -19,7 +19,15 @@
 					"name": "BreedDim"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ls_snowflake_pet",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
 			"transformations": [
 				{
 					"name": "aggregate1"
@@ -35,6 +43,9 @@
 				}
 			],
 			"scriptLines": [
+				"parameters{",
+				"     Schema_Name as string",
+				"}",
 				"source(output(",
 				"          LICENSE_ID as decimal(38,0),",
 				"          LICENSE_ISSUE_DATE as date,",
@@ -84,7 +95,33 @@
 				"     ignoreSpaces: false,",
 				"     broadcast: 'auto')~> join1",
 				"join1 alterRow(insertIf(isNull(BREED_KEY)),",
-				"     updateIf(!isNull(BREED_KEY))) ~> alterRow1"
+				"     updateIf(!isNull(BREED_KEY))) ~> alterRow1",
+				"alterRow1 sink(allowSchemaDrift: true,",
+				"     validateSchema: true,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:true,",
+				"     upsertable:false,",
+				"     keys:['BREED_ID'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     stageInsert: true,",
+				"     mapColumn(",
+				"          BREED_ID = aggregate1@BREED_ID,",
+				"          SPECIES,",
+				"          PRIMARY_BREED = aggregate1@PRIMARY_BREED,",
+				"          SECONDARY_BREED = aggregate1@SECONDARY_BREED,",
+				"          SOURCE_FILE_NAME = aggregate1@SOURCE_FILE_NAME,",
+				"          LOAD_TIMESTAMP = aggregate1@LOAD_TIMESTAMP,",
+				"          BREED_KEY,",
+				"          BREED_ID = BreedDim@BREED_ID,",
+				"          SPECIES_NAME,",
+				"          PRIMARY_BREED = BreedDim@PRIMARY_BREED,",
+				"          SECONDARY_BREED = BreedDim@SECONDARY_BREED,",
+				"          LOAD_TIMESTAMP = BreedDim@LOAD_TIMESTAMP,",
+				"          SOURCE_FILE_NAME = BreedDim@SOURCE_FILE_NAME",
+				"     )) ~> sink1"
 			]
 		}
 	}
