@@ -45,6 +45,81 @@
 							"type": "LinkedServiceReference"
 						},
 						"path": "stagedata"
+					},
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "License_Issue_Date",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LICENSE_ISSUE_DATE",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"name": "License_Number",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LICENSE_NUMBER",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Animal_Name",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ANIMAL_NAME",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Species",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SPECIES",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Primary_Breed",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PRIMARY_BREED",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Secondary_Breed",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SECONDARY_BREED",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Zip_Code",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ZIP_CODE",
+									"type": "String"
+								}
+							}
+						]
 					}
 				},
 				"inputs": [
