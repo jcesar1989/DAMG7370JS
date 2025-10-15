@@ -1,5 +1,5 @@
 {
-	"name": "pet_Abhishek_ds",
+	"name": "parquet_Abhishek_ds",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "ls_storage",
