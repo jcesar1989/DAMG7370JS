@@ -6,7 +6,7 @@
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
-			"name": "Team_Project_Pet"
+			"name": "Team_Project_Pet/Pet_Prit"
 		},
 		"annotations": [],
 		"type": "DelimitedText",
