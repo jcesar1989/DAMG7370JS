@@ -1,0 +1,19 @@
+{
+	"name": "ls_storage",
+	"properties": {
+		"annotations": [],
+		"type": "FileServer",
+		"typeProperties": {
+			"host": "https://stgdadabi.blob.core.windows.net",
+			"userId": "PET_USER",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "AzureKeyVault2",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "snowPetUser"
+			}
+		}
+	}
+}
