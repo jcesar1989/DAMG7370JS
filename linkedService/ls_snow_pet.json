@@ -5,7 +5,7 @@
 		"type": "SnowflakeV2",
 		"typeProperties": {
 			"authenticationType": "Basic",
-			"accountIdentifier": " OBA89940",
+			"accountIdentifier": "XUKGRLM-OBA89940",
 			"user": "PET_USER",
 			"database": "PET_DB",
 			"warehouse": "COMPUTE_WH",
