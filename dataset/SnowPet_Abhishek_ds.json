@@ -1,0 +1,35 @@
+{
+	"name": "SnowPet_Abhishek_ds",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_snow_pet",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"schema_name": {
+				"type": "string",
+				"defaultValue": "STAGE"
+			},
+			"table_name": {
+				"type": "string",
+				"defaultValue": "LOCATION"
+			}
+		},
+		"folder": {
+			"name": "Team_Project_Pet"
+		},
+		"annotations": [],
+		"type": "SnowflakeV2Table",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().schema_name",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().table_name",
+				"type": "Expression"
+			}
+		}
+	}
+}
