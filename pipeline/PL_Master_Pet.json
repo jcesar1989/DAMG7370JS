@@ -460,7 +460,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "dataflow1",
+						"referenceName": "Breed_Dim_Dataflow",
 						"type": "DataFlowReference",
 						"datasetParameters": {
 							"stagepet": {
