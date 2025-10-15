@@ -56,7 +56,7 @@
 								},
 								"sink": {
 									"name": "LICENSE_ISSUE_DATE",
-									"type": "DateTime"
+									"type": "String"
 								}
 							},
 							{
