@@ -1,0 +1,27 @@
+{
+	"name": "location_Abhishek_ds",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_storage",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Team_Project_Pet"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "geo-data(in).csv",
+				"folderPath": "pet",
+				"container": "stagedata"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}
