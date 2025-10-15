@@ -5,7 +5,7 @@
 		"annotations": [],
 		"type": "AzureBlobStorage",
 		"typeProperties": {
-			"serviceEndpoint": "https://stgdamghw7370.blob.core.windows.net/",
+			"serviceEndpoint": "https://stgdadabi.blob.core.windows.net/",
 			"accountKind": "StorageV2"
 		}
 	}

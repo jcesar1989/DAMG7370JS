@@ -1,0 +1,131 @@
+{
+	"name": "Artist_DIM_Load_DF",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "SnowChinookDS",
+						"type": "DatasetReference"
+					},
+					"name": "StgArtist"
+				},
+				{
+					"dataset": {
+						"referenceName": "ArtistMax",
+						"type": "DatasetReference"
+					},
+					"name": "ArtistMaxId"
+				},
+				{
+					"dataset": {
+						"referenceName": "ArtistMax",
+						"type": "DatasetReference"
+					},
+					"name": "ArtistDIM"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ArtistMax",
+						"type": "DatasetReference"
+					},
+					"name": "FinalArtistDIM"
+				}
+			],
+			"transformations": [
+				{
+					"name": "joinStgDim"
+				},
+				{
+					"name": "joinStageAndSource"
+				},
+				{
+					"name": "surrogateKey"
+				},
+				{
+					"name": "derivedAuditCols"
+				},
+				{
+					"name": "AlterRow"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          ARTISTID as decimal(38,0),",
+				"          NAME as string,",
+				"          CREATED_BY as string,",
+				"          CREATED_DT as date",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table') ~> StgArtist",
+				"source(output(",
+				"          MAXSK as decimal(10,0)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     query: 'SELECT NVL(MAX(ARTIST_KEY),0) as MaxSK FROM DW.ARTIST_DIM',",
+				"     format: 'query') ~> ArtistMaxId",
+				"source(output(",
+				"          ARTIST_KEY as decimal(10,0),",
+				"          ARTIST_ID as decimal(10,0),",
+				"          ARTIST_NAME as string,",
+				"          SOURCE_ID as string,",
+				"          DATE_TO_WAREHOUSE as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table') ~> ArtistDIM",
+				"StgArtist, ArtistMaxId join(1==1,",
+				"     joinType:'cross',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinStgDim",
+				"joinStgDim, ArtistDIM join(ARTISTID == ARTIST_ID,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinStageAndSource",
+				"joinStageAndSource keyGenerate(output(RowNum as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> surrogateKey",
+				"surrogateKey derive(DI_CREATED_DT = toString(currentDate(), 'yyyy-MM-dd'),",
+				"          DI_JOB_ID = concat('DI_', upper(right(uuid(), 7))),",
+				"          ARTIST_KEY = iif(isNull(ARTIST_KEY), RowNum + MAXSK, ARTIST_KEY),",
+				"          ARTIST_ID = ARTISTID,",
+				"          ARTIST_NAME = NAME,",
+				"          DATE_TO_WAREHOUSE = currentTimestamp()) ~> derivedAuditCols",
+				"derivedAuditCols alterRow(updateIf(ARTISTID==ARTIST_ID&&NAME!=ARTIST_NAME),",
+				"     insertIf(isNull(ARTIST_KEY)==true())) ~> AlterRow",
+				"AlterRow sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          ARTIST_KEY as decimal(10,0),",
+				"          ARTIST_ID as decimal(10,0),",
+				"          ARTIST_NAME as string,",
+				"          SOURCE_ID as string,",
+				"          DATE_TO_WAREHOUSE as timestamp",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:true,",
+				"     upsertable:false,",
+				"     keys:['ARTIST_KEY'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     stageInsert: true,",
+				"     mapColumn(",
+				"          ARTIST_KEY,",
+				"          ARTIST_ID = ARTISTID,",
+				"          ARTIST_NAME = NAME,",
+				"          SOURCE_ID,",
+				"          DATE_TO_WAREHOUSE",
+				"     )) ~> FinalArtistDIM"
+			]
+		}
+	}
+}

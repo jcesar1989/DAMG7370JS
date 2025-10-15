@@ -7,20 +7,14 @@
 		},
 		"parameters": {
 			"container_name": {
-				"type": "string",
-				"defaultValue": "stagedata2"
+				"type": "string"
 			},
 			"folder_name": {
-				"type": "string",
-				"defaultValue": "fileupload"
+				"type": "string"
 			},
 			"file_name": {
-				"type": "string",
-				"defaultValue": "invoice"
+				"type": "string"
 			}
-		},
-		"folder": {
-			"name": "Individual_Project"
 		},
 		"annotations": [],
 		"type": "Parquet",

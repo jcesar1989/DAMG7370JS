@@ -1,0 +1,9 @@
+{
+	"name": "adf-dadabi7370",
+	"location": "eastus2",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "399fc5e4-eeb8-47b8-8576-ef42e616c347",
+		"tenantId": "a8eec281-aaa3-4dae-ac9b-9a398b9215e7"
+	}
+}

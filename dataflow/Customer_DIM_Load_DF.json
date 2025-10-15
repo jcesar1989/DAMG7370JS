@@ -1,0 +1,215 @@
+{
+	"name": "Customer_DIM_Load_DF",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "SnowChinookDS",
+						"type": "DatasetReference"
+					},
+					"name": "StgCustomer"
+				},
+				{
+					"dataset": {
+						"referenceName": "CustomerMaxId",
+						"type": "DatasetReference"
+					},
+					"name": "CustomerMaxId"
+				},
+				{
+					"dataset": {
+						"referenceName": "Customer_DIM",
+						"type": "DatasetReference"
+					},
+					"name": "CustomerDIM"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "Customer_DIM",
+						"type": "DatasetReference"
+					},
+					"name": "FinalCustomerDIM"
+				}
+			],
+			"transformations": [
+				{
+					"name": "joinStgDim"
+				},
+				{
+					"name": "joinStageAndSource"
+				},
+				{
+					"name": "surrogateKey"
+				},
+				{
+					"name": "derivedAuditCols"
+				},
+				{
+					"name": "select1"
+				},
+				{
+					"name": "AlterRow"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          CUSTOMERID as decimal(38,0),",
+				"          FIRSTNAME as string,",
+				"          LASTNAME as string,",
+				"          COMPANY as string,",
+				"          ADDRESS as string,",
+				"          CITY as string,",
+				"          STATE as string,",
+				"          COUNTRY as string,",
+				"          POSTALCODE as string,",
+				"          PHONE as string,",
+				"          FAX as string,",
+				"          EMAIL as string,",
+				"          SUPPORTREPID as decimal(38,0),",
+				"          CREATED_BY as string,",
+				"          CREATED_DT as date",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table') ~> StgCustomer",
+				"source(output(",
+				"          MAXSK as decimal(10,0)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     query: 'SELECT NVL(MAX(CUSTOMER_KEY),0) as MaxSK FROM DW.CUSTOMER_DIM',",
+				"     format: 'query') ~> CustomerMaxId",
+				"source(output(",
+				"          CUSTOMER_KEY as decimal(10,0),",
+				"          CUSTOMER_ID as decimal(10,0),",
+				"          FIRST_NAME as string,",
+				"          LAST_NAME as string,",
+				"          COMPANY_NAME as string,",
+				"          CITY as string,",
+				"          STATE as string,",
+				"          COUNTRY as string,",
+				"          ZIP_CODE as string,",
+				"          EMPLOYEE_ID as decimal(10,0),",
+				"          IS_ACTIVE as string,",
+				"          SOURCE_ID as string,",
+				"          DATE_TO_WAREHOUSE as timestamp,",
+				"          ROW_HASH as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table') ~> CustomerDIM",
+				"StgCustomer, CustomerMaxId join(1==1,",
+				"     joinType:'cross',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinStgDim",
+				"joinStgDim, CustomerDIM join(CUSTOMERID == CUSTOMER_ID,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinStageAndSource",
+				"select1 keyGenerate(output(RowNum as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> surrogateKey",
+				"surrogateKey derive(DI_CREATED_DT = currentDate(),",
+				"          DI_JOB_ID = concat('DI_', upper(right(uuid(), 7))),",
+				"          NewCustomerSK = iif(isNull(CUSTOMER_KEY), RowNum + MAXSK, CUSTOMER_KEY),",
+				"          DATE_TO_WAREHOUSE = currentTimestamp(),",
+				"          ROW_HASH = md5(",
+				"  concat(",
+				"    upper(trim(coalesce(FIRSTNAME,''))), '|',",
+				"    upper(trim(coalesce(LASTNAME ,''))), '|',",
+				"    upper(trim(coalesce(COMPANY ,''))), '|',",
+				"    upper(trim(coalesce(CITY    ,''))), '|',",
+				"    upper(trim(coalesce(STATE   ,''))), '|',",
+				"    upper(trim(coalesce(COUNTRY ,''))), '|',",
+				"    upper(trim(coalesce(POSTALCODE,''))), '|',",
+				"    toString(coalesce(SUPPORTREPID,0))",
+				"  )",
+				")) ~> derivedAuditCols",
+				"joinStageAndSource select(mapColumn(",
+				"          CUSTOMERID,",
+				"          FIRSTNAME,",
+				"          LASTNAME,",
+				"          COMPANY,",
+				"          ADDRESS,",
+				"          CITY = StgCustomer@CITY,",
+				"          STATE = StgCustomer@STATE,",
+				"          COUNTRY = StgCustomer@COUNTRY,",
+				"          POSTALCODE,",
+				"          PHONE,",
+				"          FAX,",
+				"          EMAIL,",
+				"          SUPPORTREPID,",
+				"          CREATED_BY,",
+				"          CREATED_DT,",
+				"          MAXSK,",
+				"          CUSTOMER_KEY,",
+				"          CUSTOMER_ID,",
+				"          FIRST_NAME,",
+				"          LAST_NAME,",
+				"          COMPANY_NAME,",
+				"          CITY = CustomerDIM@CITY,",
+				"          STATE = CustomerDIM@STATE,",
+				"          COUNTRY = CustomerDIM@COUNTRY,",
+				"          ZIP_CODE,",
+				"          EMPLOYEE_ID,",
+				"          IS_ACTIVE,",
+				"          SOURCE_ID,",
+				"          DATE_TO_WAREHOUSE,",
+				"          ROW_HASH",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"derivedAuditCols alterRow(updateIf(!isNull(CUSTOMER_ID)&&coalesce(ROW_HASH,'')!=ROW_HASH),",
+				"     insertIf(isNull(CUSTOMER_ID))) ~> AlterRow",
+				"AlterRow sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          CUSTOMER_KEY as decimal(10,0),",
+				"          CUSTOMER_ID as decimal(10,0),",
+				"          FIRST_NAME as string,",
+				"          LAST_NAME as string,",
+				"          COMPANY_NAME as string,",
+				"          CITY as string,",
+				"          STATE as string,",
+				"          COUNTRY as string,",
+				"          ZIP_CODE as string,",
+				"          EMPLOYEE_ID as decimal(10,0),",
+				"          IS_ACTIVE as string,",
+				"          SOURCE_ID as string,",
+				"          DATE_TO_WAREHOUSE as timestamp,",
+				"          ROW_HASH as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:true,",
+				"     upsertable:false,",
+				"     keys:['CUSTOMER_KEY'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     stageInsert: true,",
+				"     mapColumn(",
+				"          CUSTOMER_KEY = NewCustomerSK,",
+				"          CUSTOMER_ID = CUSTOMERID,",
+				"          FIRST_NAME = FIRSTNAME,",
+				"          LAST_NAME = LASTNAME,",
+				"          COMPANY_NAME = COMPANY,",
+				"          CITY,",
+				"          STATE,",
+				"          COUNTRY,",
+				"          ZIP_CODE = POSTALCODE,",
+				"          EMPLOYEE_ID = SUPPORTREPID,",
+				"          SOURCE_ID,",
+				"          DATE_TO_WAREHOUSE,",
+				"          ROW_HASH",
+				"     )) ~> FinalCustomerDIM"
+			]
+		}
+	}
+}
