@@ -1,0 +1,143 @@
+{
+	"name": "SnowLocationLoad_Abhishek_pl",
+	"properties": {
+		"activities": [
+			{
+				"name": "SnowLocStageLoad",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:10:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 60,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"sink": {
+						"type": "SnowflakeV2Sink",
+						"importSettings": {
+							"type": "SnowflakeImportCopyCommand",
+							"additionalCopyOptions": {
+								"ON_ERROR": "CONTINUE"
+							},
+							"additionalFormatOptions": {
+								"ERROR_ON_COLUMN_COUNT_MISMATCH": "FALSE"
+							}
+						}
+					},
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "ls_storage_sas_auth",
+							"type": "LinkedServiceReference"
+						},
+						"path": "stagedata"
+					},
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "state_fips",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATE_FIPS",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"name": "state",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATE",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "state_abbr",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATE_ABBR",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "zipcode",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ZIPCODE",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "county",
+									"type": "String"
+								},
+								"sink": {
+									"name": "COUNTY",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "city",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CITY",
+									"type": "String"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "parquet_Abhishek_ds",
+						"type": "DatasetReference",
+						"parameters": {
+							"container_name": "stagedata",
+							"folder_name": "pet",
+							"file_name": "location.parquet"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "SnowPet_Abhishek_ds",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema_name": "STAGE",
+							"table_name": "LOCATION"
+						}
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Team_Project_Pet/PL_Test"
+		},
+		"annotations": []
+	}
+}
