@@ -83,7 +83,7 @@
 						"type": "Copy",
 						"dependsOn": [
 							{
-								"activity": "PL_pet_Load_2_parque",
+								"activity": "csv2parque",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -225,7 +225,7 @@
 						]
 					},
 					{
-						"name": "dataflow1",
+						"name": "LoadSTGtables",
 						"type": "ExecuteDataFlow",
 						"dependsOn": [
 							{
@@ -278,20 +278,292 @@
 						}
 					},
 					{
-						"name": "PL_pet_Load_2_parque",
-						"type": "ExecutePipeline",
+						"name": "csv2parque",
+						"type": "Copy",
 						"dependsOn": [],
 						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
 							"secureInput": false
 						},
 						"userProperties": [],
 						"typeProperties": {
-							"pipeline": {
-								"referenceName": "PL_pet_Load_2_parque",
-								"type": "PipelineReference"
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
 							},
-							"waitOnCompletion": true,
-							"parameters": {}
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"logSettings": {
+								"enableCopyActivityLog": true,
+								"copyActivityLogSettings": {
+									"logLevel": "Warning",
+									"enableReliableLogging": false
+								},
+								"logLocationSettings": {
+									"linkedServiceName": {
+										"referenceName": "ls_storage_azure_blob",
+										"type": "LinkedServiceReference"
+									}
+								}
+							},
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "License Issue Date",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "License_Issue_Date",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "License Number",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "License_Number",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Animal Name",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Animal_Name",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Species",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Species",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Primary Breed",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Primary_Breed",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Secondary Breed",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Secondary_Breed",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ZIP Code",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Zip_Code",
+											"physicalType": "UTF8"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "pet_ds",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Parquet_ds",
+								"type": "DatasetReference",
+								"parameters": {
+									"container_name": "stageteamdata",
+									"folder_name": "folder",
+									"file_name": {
+										"value": "@concat('petlicense.parquet')",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Load_Dim_Date",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "LoadSTGtables",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "ls_snowflake_pet",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"Account": "QLHNMEQ-RTA20152",
+								"Database": "pet_db",
+								"Warehouse": "COMPUTE_WH",
+								"Username": "SEPULVEDAJU",
+								"Role": "ACCOUNTADMIN",
+								"Host": "QLHNMEQ-RTA20152.snowflakecomputing.com",
+								"Schema": "DW"
+							}
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "USE SCHEMA DW;\nMERGE INTO DATE_DIM AS tgt\nUSING (\n    WITH DATE_RANGE AS (\n        SELECT \n            DATEADD(DAY, SEQ4(), '2010-01-01')::DATE AS FULL_DATE\n        FROM TABLE(GENERATOR(ROWCOUNT => 7305))  -- 20 years of dates (2010-2030)\n    )\n    SELECT \n        TO_NUMBER(TO_CHAR(FULL_DATE, 'YYYYMMDD')) AS DATE_KEY,\n        FULL_DATE,\n        DAYOFWEEK(FULL_DATE) AS DAY_OF_WEEK,\n        DAYNAME(FULL_DATE) AS DAY_NAME,\n        DAY(FULL_DATE) AS DAY_OF_MONTH,\n        DAYOFYEAR(FULL_DATE) AS DAY_OF_YEAR,\n        WEEKOFYEAR(FULL_DATE) AS WEEK_OF_YEAR,\n        MONTH(FULL_DATE) AS MONTH_NUMBER,\n        MONTHNAME(FULL_DATE) AS MONTH_NAME,\n        TO_CHAR(FULL_DATE, 'MON') AS MONTH_ABBR,\n        QUARTER(FULL_DATE) AS QUARTER,\n        CONCAT('Q', QUARTER(FULL_DATE)) AS QUARTER_NAME,\n        YEAR(FULL_DATE) AS YEAR,\n        CASE \n            WHEN MONTH(FULL_DATE) >= 7 THEN YEAR(FULL_DATE) + 1\n            ELSE YEAR(FULL_DATE)\n        END AS FISCAL_YEAR,\n        CASE WHEN DAYOFWEEK(FULL_DATE) IN (0, 6) THEN TRUE ELSE FALSE END AS IS_WEEKEND,\n        FALSE AS IS_HOLIDAY  -- Update manually or with holiday logic\n    FROM DATE_RANGE\n) AS src\nON tgt.DATE_KEY = src.DATE_KEY\nWHEN NOT MATCHED THEN\n    INSERT (\n        DATE_KEY,\n        FULL_DATE,\n        DAY_OF_WEEK,\n        DAY_NAME,\n        DAY_OF_MONTH,\n        DAY_OF_YEAR,\n        WEEK_OF_YEAR,\n        MONTH_NUMBER,\n        MONTH_NAME,\n        MONTH_ABBR,\n        QUARTER,\n        QUARTER_NAME,\n        YEAR,\n        FISCAL_YEAR,\n        IS_WEEKEND,\n        IS_HOLIDAY,\n        LOAD_TIMESTAMP,\n        SOURCE_FILE_NAME\n    )\n    VALUES (\n        src.DATE_KEY,\n        src.FULL_DATE,\n        src.DAY_OF_WEEK,\n        src.DAY_NAME,\n        src.DAY_OF_MONTH,\n        src.DAY_OF_YEAR,\n        src.WEEK_OF_YEAR,\n        src.MONTH_NUMBER,\n        src.MONTH_NAME,\n        src.MONTH_ABBR,\n        src.QUARTER,\n        src.QUARTER_NAME,\n        src.YEAR,\n        src.FISCAL_YEAR,\n        src.IS_WEEKEND,\n        src.IS_HOLIDAY,\n        CURRENT_TIMESTAMP(),\n        'ADF_DATE_DIM_LOAD'\n    );\n\n"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					},
+					{
+						"name": "Load_Location_Dim",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "Load_Dim_Date",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "ls_snowflake_pet",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"Account": "QLHNMEQ-RTA20152",
+								"Database": "pet_db",
+								"Warehouse": "COMPUTE_WH",
+								"Username": "SEPULVEDAJU",
+								"Role": "ACCOUNTADMIN",
+								"Host": "QLHNMEQ-RTA20152.snowflakecomputing.com",
+								"Schema": "DW"
+							}
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "\r\n\r\nMERGE INTO PET_DB.DW.LOCATION_DIM AS TGT\r\nUSING (\r\n    SELECT DISTINCT\r\n        CONCAT(STATE_FIPS, '-', ZIPCODE) AS LOCATION_ID,\r\n        STATE_FIPS,\r\n        STATE_ABBR,\r\n        STATE,\r\n        ZIPCODE,\r\n        COUNTY,\r\n        CITY,\r\n        LOAD_TIMESTAMP,\r\n        SOURCE_FILE_NAME\r\n    FROM PET_DB.STAGE.LOCATION\r\n    WHERE STATE_FIPS IS NOT NULL \r\n      AND CITY IS NOT NULL\r\n) AS SRC\r\nON TGT.LOCATION_ID = SRC.LOCATION_ID\r\n\r\n-- Update existing records\r\nWHEN MATCHED THEN UPDATE SET\r\n    TGT.STATE_FIPS = SRC.STATE_FIPS,\r\n    TGT.STATE_ABBR = SRC.STATE_ABBR,\r\n    TGT.STATE = SRC.STATE,\r\n    TGT.ZIPCODE = SRC.ZIPCODE,\r\n    TGT.COUNTY = SRC.COUNTY,\r\n    TGT.CITY = SRC.CITY,\r\n    TGT.SOURCE_FILE_NAME = SRC.SOURCE_FILE_NAME\r\n\r\n-- Insert new records\r\nWHEN NOT MATCHED THEN\r\n    INSERT (\r\n        LOCATION_ID,\r\n        STATE_FIPS,\r\n        STATE_ABBR,\r\n        STATE,\r\n        ZIPCODE,\r\n        COUNTY,\r\n        CITY,\r\n        LOAD_TIMESTAMP,\r\n        SOURCE_FILE_NAME\r\n    )\r\n    VALUES (\r\n        SRC.LOCATION_ID,\r\n        SRC.STATE_FIPS,\r\n        SRC.STATE_ABBR,\r\n        SRC.STATE,\r\n        SRC.ZIPCODE,\r\n        SRC.COUNTY,\r\n        SRC.CITY,\r\n        SRC.LOAD_TIMESTAMP,\r\n        SRC.SOURCE_FILE_NAME\r\n    );\r\n\r\n"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					},
+					{
+						"name": "BreedDimDataflow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Load_Location_Dim",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "Breed_Dim_Dataflow",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"stagepet": {
+										"schema_name": "STAGE",
+										"table_name": "PET_LICENSE"
+									},
+									"BreedDim": {
+										"schema_name": "DW",
+										"table_name": "BREED_DIM"
+									},
+									"sink1": {
+										"schema_name": "DW",
+										"table_name": "BREED_DIM"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
 						}
 					}
 				],

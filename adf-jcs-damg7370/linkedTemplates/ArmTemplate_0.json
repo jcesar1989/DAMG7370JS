@@ -414,6 +414,10 @@
 					"Host": {
 						"type": "string",
 						"defaultValue": "QLHNMEQ-RTA20152.snowflakecomputing.com"
+					},
+					"Schema": {
+						"type": "string",
+						"defaultValue": "DW"
 					}
 				},
 				"annotations": [],
@@ -433,7 +437,8 @@
 							"type": "LinkedServiceReference"
 						},
 						"secretName": "snowflakechinook"
-					}
+					},
+					"schema": "@linkedService().Schema"
 				},
 				"version": "1.1"
 			},
@@ -542,185 +547,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/PL_pet_Load_2_parque')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "csv2parque",
-						"type": "Copy",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "DelimitedTextSource",
-								"storeSettings": {
-									"type": "AzureBlobStorageReadSettings",
-									"recursive": true,
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "DelimitedTextReadSettings"
-								}
-							},
-							"sink": {
-								"type": "ParquetSink",
-								"storeSettings": {
-									"type": "AzureBlobStorageWriteSettings"
-								},
-								"formatSettings": {
-									"type": "ParquetWriteSettings"
-								}
-							},
-							"enableStaging": false,
-							"logSettings": {
-								"enableCopyActivityLog": true,
-								"copyActivityLogSettings": {
-									"logLevel": "Warning",
-									"enableReliableLogging": false
-								},
-								"logLocationSettings": {
-									"linkedServiceName": {
-										"referenceName": "ls_storage_azure_blob",
-										"type": "LinkedServiceReference"
-									}
-								}
-							},
-							"translator": {
-								"type": "TabularTranslator",
-								"mappings": [
-									{
-										"source": {
-											"name": "License Issue Date",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "License_Issue_Date",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "License Number",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "License_Number",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Animal Name",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Animal_Name",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Species",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Species",
-											"type": "String",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Primary Breed",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Primary_Breed",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "Secondary Breed",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Secondary_Breed",
-											"physicalType": "UTF8"
-										}
-									},
-									{
-										"source": {
-											"name": "ZIP Code",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Zip_Code",
-											"physicalType": "UTF8"
-										}
-									}
-								],
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "pet_ds",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "Parquet_ds",
-								"type": "DatasetReference",
-								"parameters": {
-									"container_name": "stageteamdata",
-									"folder_name": "folder",
-									"file_name": {
-										"value": "@concat('petlicense.parquet')",
-										"type": "Expression"
-									}
-								}
-							}
-						]
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"folder": {
-					"name": "Team_Project_Pet"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/pet_ds')]",
-				"[concat(variables('factoryId'), '/datasets/Parquet_ds')]",
-				"[concat(variables('factoryId'), '/linkedServices/ls_storage_azure_blob')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/ls_snowflake_pet')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -734,7 +560,8 @@
 						"Warehouse": "COMPUTE_WH",
 						"Username": "SEPULVEDAJU",
 						"Role": "ACCOUNTADMIN",
-						"Host": "QLHNMEQ-RTA20152.snowflakecomputing.com"
+						"Host": "QLHNMEQ-RTA20152.snowflakecomputing.com",
+						"Schema": "DW"
 					}
 				},
 				"parameters": {
@@ -748,7 +575,7 @@
 					}
 				},
 				"folder": {
-					"name": "Individual_Project"
+					"name": "Team_Project_Pet"
 				},
 				"annotations": [],
 				"type": "SnowflakeV2Table",
@@ -1113,6 +940,128 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/Breed_Dim_Dataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ls_snowflake_pet",
+								"type": "DatasetReference"
+							},
+							"name": "stagepet"
+						},
+						{
+							"dataset": {
+								"referenceName": "ls_snowflake_pet",
+								"type": "DatasetReference"
+							},
+							"name": "BreedDim"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ls_snowflake_pet",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "aggregate1"
+						},
+						{
+							"name": "BreedID"
+						},
+						{
+							"name": "join1"
+						},
+						{
+							"name": "alterRow1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          LICENSE_ID as decimal(38,0),",
+						"          LICENSE_ISSUE_DATE as date,",
+						"          LICENSE_NUMBER as string,",
+						"          ANIMAL_NAME as string,",
+						"          SPECIES as string,",
+						"          PRIMARY_BREED as string,",
+						"          SECONDARY_BREED as string,",
+						"          ZIP_CODE as string,",
+						"          LOAD_TIMESTAMP as timestamp,",
+						"          SOURCE_FILE_NAME as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     query: 'select * from STAGE.PET_LICENSE\\n',",
+						"     format: 'query') ~> stagepet",
+						"source(output(",
+						"          BREED_KEY as decimal(38,0),",
+						"          BREED_ID as string,",
+						"          SPECIES_NAME as string,",
+						"          PRIMARY_BREED as string,",
+						"          SECONDARY_BREED as string,",
+						"          LOAD_TIMESTAMP as timestamp,",
+						"          SOURCE_FILE_NAME as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     query: 'Select * from DW.BREED_DIM',",
+						"     format: 'query') ~> BreedDim",
+						"BreedID aggregate(groupBy(BREED_ID),",
+						"     SPECIES = first(SPECIES),",
+						"          PRIMARY_BREED = first(PRIMARY_BREED),",
+						"          SECONDARY_BREED = first(SECONDARY_BREED),",
+						"          SOURCE_FILE_NAME = first(SOURCE_FILE_NAME),",
+						"          LOAD_TIMESTAMP = first(LOAD_TIMESTAMP)) ~> aggregate1",
+						"stagepet derive(BREED_ID = sha2(256, concat(\r",
+						"    coalesce(SPECIES, ''),\r",
+						"    '-',\r",
+						"    coalesce(PRIMARY_BREED, ''),\r",
+						"    '-',\r",
+						"    coalesce(SECONDARY_BREED, '')\r",
+						"))) ~> BreedID",
+						"aggregate1, BreedDim join(aggregate1@BREED_ID == BreedDim@BREED_ID,",
+						"     joinType:'left',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"join1 alterRow(insertIf(isNull(BREED_KEY)),",
+						"     updateIf(!isNull(BREED_KEY))) ~> alterRow1",
+						"alterRow1 sink(allowSchemaDrift: true,",
+						"     validateSchema: true,",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:true,",
+						"     upsertable:false,",
+						"     keys:['BREED_ID'],",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     stageInsert: true,",
+						"     mapColumn(",
+						"          BREED_ID = aggregate1@BREED_ID,",
+						"          SPECIES,",
+						"          PRIMARY_BREED = aggregate1@PRIMARY_BREED,",
+						"          SECONDARY_BREED = aggregate1@SECONDARY_BREED,",
+						"          SOURCE_FILE_NAME = aggregate1@SOURCE_FILE_NAME,",
+						"          LOAD_TIMESTAMP = aggregate1@LOAD_TIMESTAMP",
+						"     )) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ls_snowflake_pet')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Customer_Dataflow')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -1390,6 +1339,7 @@
 						"     insertable:true,",
 						"     updateable:false,",
 						"     upsertable:false,",
+						"     truncate:true,",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
@@ -1410,6 +1360,7 @@
 						"     insertable:true,",
 						"     updateable:false,",
 						"     upsertable:false,",
+						"     truncate:true,",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",

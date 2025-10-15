@@ -187,7 +187,7 @@
 						"type": "Copy",
 						"dependsOn": [
 							{
-								"activity": "PL_pet_Load_2_parque",
+								"activity": "csv2parque",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -329,7 +329,7 @@
 						]
 					},
 					{
-						"name": "dataflow1",
+						"name": "LoadSTGtables",
 						"type": "ExecuteDataFlow",
 						"dependsOn": [
 							{
@@ -381,165 +381,6 @@
 							"traceLevel": "Fine"
 						}
 					},
-					{
-						"name": "PL_pet_Load_2_parque",
-						"type": "ExecutePipeline",
-						"dependsOn": [],
-						"policy": {
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "PL_pet_Load_2_parque",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"folder": {
-					"name": "Team_Project_Pet"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/location_ds')]",
-				"[concat(variables('factoryId'), '/datasets/Parquet_ds')]",
-				"[concat(variables('factoryId'), '/dataflows/Load_pet_location_Dataflow')]",
-				"[concat(variables('factoryId'), '/pipelines/PL_pet_Load_2_parque')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/PL_To_Parque_filles')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "ForEachTable",
-						"type": "ForEach",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@pipeline().parameters.table_name",
-								"type": "Expression"
-							},
-							"batchCount": 6,
-							"activities": [
-								{
-									"name": "Parque_2_snowflake",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "ParquetSource",
-											"storeSettings": {
-												"type": "AzureBlobStorageReadSettings",
-												"recursive": true,
-												"enablePartitionDiscovery": false
-											},
-											"formatSettings": {
-												"type": "ParquetReadSettings"
-											}
-										},
-										"sink": {
-											"type": "SnowflakeV2Sink",
-											"importSettings": {
-												"type": "SnowflakeImportCopyCommand"
-											}
-										},
-										"enableStaging": true,
-										"stagingSettings": {
-											"linkedServiceName": {
-												"referenceName": "ls_storage_sas_auth",
-												"type": "LinkedServiceReference"
-											},
-											"path": "stagedata2"
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "Parquet_ds",
-											"type": "DatasetReference",
-											"parameters": {
-												"container_name": "stagedata2",
-												"folder_name": "fileupload",
-												"file_name": {
-													"value": "@concat(item(),'.parquet')",
-													"type": "Expression"
-												}
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "snowflake_chinook_ds",
-											"type": "DatasetReference",
-											"parameters": {
-												"schema_name": "STAGE",
-												"table_name": {
-													"value": "@toUpper(item())",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"folder_name": {
-						"type": "string"
-					},
-					"table_name": {
-						"type": "array",
-						"defaultValue": [
-							"Artist",
-							"Album",
-							"Customer",
-							"Invoice",
-							"InvoiceLine",
-							"Genre"
-						]
-					}
-				},
-				"folder": {
-					"name": "Individual_Project"
-				},
-				"annotations": [],
-				"lastPublishTime": "2025-10-12T14:42:54Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/Parquet_ds')]",
-				"[concat(variables('factoryId'), '/datasets/snowflake_chinook_ds')]",
-				"[concat(variables('factoryId'), '/linkedServices/ls_storage_sas_auth')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/PL_pet_Load_2_parque')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
 					{
 						"name": "csv2parque",
 						"type": "Copy",
@@ -697,6 +538,137 @@
 								}
 							}
 						]
+					},
+					{
+						"name": "Load_Dim_Date",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "LoadSTGtables",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "ls_snowflake_pet",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"Account": "QLHNMEQ-RTA20152",
+								"Database": "pet_db",
+								"Warehouse": "COMPUTE_WH",
+								"Username": "SEPULVEDAJU",
+								"Role": "ACCOUNTADMIN",
+								"Host": "QLHNMEQ-RTA20152.snowflakecomputing.com",
+								"Schema": "DW"
+							}
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "USE SCHEMA DW;\nMERGE INTO DATE_DIM AS tgt\nUSING (\n    WITH DATE_RANGE AS (\n        SELECT \n            DATEADD(DAY, SEQ4(), '2010-01-01')::DATE AS FULL_DATE\n        FROM TABLE(GENERATOR(ROWCOUNT => 7305))  -- 20 years of dates (2010-2030)\n    )\n    SELECT \n        TO_NUMBER(TO_CHAR(FULL_DATE, 'YYYYMMDD')) AS DATE_KEY,\n        FULL_DATE,\n        DAYOFWEEK(FULL_DATE) AS DAY_OF_WEEK,\n        DAYNAME(FULL_DATE) AS DAY_NAME,\n        DAY(FULL_DATE) AS DAY_OF_MONTH,\n        DAYOFYEAR(FULL_DATE) AS DAY_OF_YEAR,\n        WEEKOFYEAR(FULL_DATE) AS WEEK_OF_YEAR,\n        MONTH(FULL_DATE) AS MONTH_NUMBER,\n        MONTHNAME(FULL_DATE) AS MONTH_NAME,\n        TO_CHAR(FULL_DATE, 'MON') AS MONTH_ABBR,\n        QUARTER(FULL_DATE) AS QUARTER,\n        CONCAT('Q', QUARTER(FULL_DATE)) AS QUARTER_NAME,\n        YEAR(FULL_DATE) AS YEAR,\n        CASE \n            WHEN MONTH(FULL_DATE) >= 7 THEN YEAR(FULL_DATE) + 1\n            ELSE YEAR(FULL_DATE)\n        END AS FISCAL_YEAR,\n        CASE WHEN DAYOFWEEK(FULL_DATE) IN (0, 6) THEN TRUE ELSE FALSE END AS IS_WEEKEND,\n        FALSE AS IS_HOLIDAY  -- Update manually or with holiday logic\n    FROM DATE_RANGE\n) AS src\nON tgt.DATE_KEY = src.DATE_KEY\nWHEN NOT MATCHED THEN\n    INSERT (\n        DATE_KEY,\n        FULL_DATE,\n        DAY_OF_WEEK,\n        DAY_NAME,\n        DAY_OF_MONTH,\n        DAY_OF_YEAR,\n        WEEK_OF_YEAR,\n        MONTH_NUMBER,\n        MONTH_NAME,\n        MONTH_ABBR,\n        QUARTER,\n        QUARTER_NAME,\n        YEAR,\n        FISCAL_YEAR,\n        IS_WEEKEND,\n        IS_HOLIDAY,\n        LOAD_TIMESTAMP,\n        SOURCE_FILE_NAME\n    )\n    VALUES (\n        src.DATE_KEY,\n        src.FULL_DATE,\n        src.DAY_OF_WEEK,\n        src.DAY_NAME,\n        src.DAY_OF_MONTH,\n        src.DAY_OF_YEAR,\n        src.WEEK_OF_YEAR,\n        src.MONTH_NUMBER,\n        src.MONTH_NAME,\n        src.MONTH_ABBR,\n        src.QUARTER,\n        src.QUARTER_NAME,\n        src.YEAR,\n        src.FISCAL_YEAR,\n        src.IS_WEEKEND,\n        src.IS_HOLIDAY,\n        CURRENT_TIMESTAMP(),\n        'ADF_DATE_DIM_LOAD'\n    );\n\n"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					},
+					{
+						"name": "Load_Location_Dim",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "Load_Dim_Date",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "ls_snowflake_pet",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"Account": "QLHNMEQ-RTA20152",
+								"Database": "pet_db",
+								"Warehouse": "COMPUTE_WH",
+								"Username": "SEPULVEDAJU",
+								"Role": "ACCOUNTADMIN",
+								"Host": "QLHNMEQ-RTA20152.snowflakecomputing.com",
+								"Schema": "DW"
+							}
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "\r\n\r\nMERGE INTO PET_DB.DW.LOCATION_DIM AS TGT\r\nUSING (\r\n    SELECT DISTINCT\r\n        CONCAT(STATE_FIPS, '-', ZIPCODE) AS LOCATION_ID,\r\n        STATE_FIPS,\r\n        STATE_ABBR,\r\n        STATE,\r\n        ZIPCODE,\r\n        COUNTY,\r\n        CITY,\r\n        LOAD_TIMESTAMP,\r\n        SOURCE_FILE_NAME\r\n    FROM PET_DB.STAGE.LOCATION\r\n    WHERE STATE_FIPS IS NOT NULL \r\n      AND CITY IS NOT NULL\r\n) AS SRC\r\nON TGT.LOCATION_ID = SRC.LOCATION_ID\r\n\r\n-- Update existing records\r\nWHEN MATCHED THEN UPDATE SET\r\n    TGT.STATE_FIPS = SRC.STATE_FIPS,\r\n    TGT.STATE_ABBR = SRC.STATE_ABBR,\r\n    TGT.STATE = SRC.STATE,\r\n    TGT.ZIPCODE = SRC.ZIPCODE,\r\n    TGT.COUNTY = SRC.COUNTY,\r\n    TGT.CITY = SRC.CITY,\r\n    TGT.SOURCE_FILE_NAME = SRC.SOURCE_FILE_NAME\r\n\r\n-- Insert new records\r\nWHEN NOT MATCHED THEN\r\n    INSERT (\r\n        LOCATION_ID,\r\n        STATE_FIPS,\r\n        STATE_ABBR,\r\n        STATE,\r\n        ZIPCODE,\r\n        COUNTY,\r\n        CITY,\r\n        LOAD_TIMESTAMP,\r\n        SOURCE_FILE_NAME\r\n    )\r\n    VALUES (\r\n        SRC.LOCATION_ID,\r\n        SRC.STATE_FIPS,\r\n        SRC.STATE_ABBR,\r\n        SRC.STATE,\r\n        SRC.ZIPCODE,\r\n        SRC.COUNTY,\r\n        SRC.CITY,\r\n        SRC.LOAD_TIMESTAMP,\r\n        SRC.SOURCE_FILE_NAME\r\n    );\r\n\r\n"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					},
+					{
+						"name": "BreedDimDataflow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Load_Location_Dim",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "Breed_Dim_Dataflow",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"stagepet": {
+										"schema_name": "STAGE",
+										"table_name": "PET_LICENSE"
+									},
+									"BreedDim": {
+										"schema_name": "DW",
+										"table_name": "BREED_DIM"
+									},
+									"sink1": {
+										"schema_name": "DW",
+										"table_name": "BREED_DIM"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
 					}
 				],
 				"policy": {
@@ -708,9 +680,133 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/pet_ds')]",
+				"[concat(variables('factoryId'), '/datasets/location_ds')]",
 				"[concat(variables('factoryId'), '/datasets/Parquet_ds')]",
+				"[concat(variables('factoryId'), '/dataflows/Load_pet_location_Dataflow')]",
+				"[concat(variables('factoryId'), '/datasets/pet_ds')]",
+				"[concat(variables('factoryId'), '/linkedServices/ls_snowflake_pet')]",
+				"[concat(variables('factoryId'), '/dataflows/Breed_Dim_Dataflow')]",
 				"[concat(variables('factoryId'), '/linkedServices/ls_storage_azure_blob')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_To_Parque_filles')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEachTable",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.table_name",
+								"type": "Expression"
+							},
+							"batchCount": 6,
+							"activities": [
+								{
+									"name": "Parque_2_snowflake",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "ParquetSource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "ParquetReadSettings"
+											}
+										},
+										"sink": {
+											"type": "SnowflakeV2Sink",
+											"importSettings": {
+												"type": "SnowflakeImportCopyCommand"
+											}
+										},
+										"enableStaging": true,
+										"stagingSettings": {
+											"linkedServiceName": {
+												"referenceName": "ls_storage_sas_auth",
+												"type": "LinkedServiceReference"
+											},
+											"path": "stagedata2"
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "Parquet_ds",
+											"type": "DatasetReference",
+											"parameters": {
+												"container_name": "stagedata2",
+												"folder_name": "fileupload",
+												"file_name": {
+													"value": "@concat(item(),'.parquet')",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "snowflake_chinook_ds",
+											"type": "DatasetReference",
+											"parameters": {
+												"schema_name": "STAGE",
+												"table_name": {
+													"value": "@toUpper(item())",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"folder_name": {
+						"type": "string"
+					},
+					"table_name": {
+						"type": "array",
+						"defaultValue": [
+							"Artist",
+							"Album",
+							"Customer",
+							"Invoice",
+							"InvoiceLine",
+							"Genre"
+						]
+					}
+				},
+				"folder": {
+					"name": "Individual_Project"
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-10-12T14:42:54Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/Parquet_ds')]",
+				"[concat(variables('factoryId'), '/datasets/snowflake_chinook_ds')]",
+				"[concat(variables('factoryId'), '/linkedServices/ls_storage_sas_auth')]"
 			]
 		},
 		{
@@ -1018,7 +1114,8 @@
 						"Warehouse": "COMPUTE_WH",
 						"Username": "SEPULVEDAJU",
 						"Role": "ACCOUNTADMIN",
-						"Host": "QLHNMEQ-RTA20152.snowflakecomputing.com"
+						"Host": "QLHNMEQ-RTA20152.snowflakecomputing.com",
+						"Schema": "DW"
 					}
 				},
 				"parameters": {
@@ -1032,7 +1129,7 @@
 					}
 				},
 				"folder": {
-					"name": "Individual_Project"
+					"name": "Team_Project_Pet"
 				},
 				"annotations": [],
 				"type": "SnowflakeV2Table",
@@ -1302,6 +1399,10 @@
 					"Host": {
 						"type": "string",
 						"defaultValue": "QLHNMEQ-RTA20152.snowflakecomputing.com"
+					},
+					"Schema": {
+						"type": "string",
+						"defaultValue": "DW"
 					}
 				},
 				"annotations": [],
@@ -1321,7 +1422,8 @@
 							"type": "LinkedServiceReference"
 						},
 						"secretName": "snowflakechinook"
-					}
+					},
+					"schema": "@linkedService().Schema"
 				},
 				"version": "1.1"
 			},
@@ -1411,6 +1513,128 @@
 				"typeProperties": {}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Breed_Dim_Dataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ls_snowflake_pet",
+								"type": "DatasetReference"
+							},
+							"name": "stagepet"
+						},
+						{
+							"dataset": {
+								"referenceName": "ls_snowflake_pet",
+								"type": "DatasetReference"
+							},
+							"name": "BreedDim"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ls_snowflake_pet",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "aggregate1"
+						},
+						{
+							"name": "BreedID"
+						},
+						{
+							"name": "join1"
+						},
+						{
+							"name": "alterRow1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          LICENSE_ID as decimal(38,0),",
+						"          LICENSE_ISSUE_DATE as date,",
+						"          LICENSE_NUMBER as string,",
+						"          ANIMAL_NAME as string,",
+						"          SPECIES as string,",
+						"          PRIMARY_BREED as string,",
+						"          SECONDARY_BREED as string,",
+						"          ZIP_CODE as string,",
+						"          LOAD_TIMESTAMP as timestamp,",
+						"          SOURCE_FILE_NAME as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     query: 'select * from STAGE.PET_LICENSE\\n',",
+						"     format: 'query') ~> stagepet",
+						"source(output(",
+						"          BREED_KEY as decimal(38,0),",
+						"          BREED_ID as string,",
+						"          SPECIES_NAME as string,",
+						"          PRIMARY_BREED as string,",
+						"          SECONDARY_BREED as string,",
+						"          LOAD_TIMESTAMP as timestamp,",
+						"          SOURCE_FILE_NAME as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     query: 'Select * from DW.BREED_DIM',",
+						"     format: 'query') ~> BreedDim",
+						"BreedID aggregate(groupBy(BREED_ID),",
+						"     SPECIES = first(SPECIES),",
+						"          PRIMARY_BREED = first(PRIMARY_BREED),",
+						"          SECONDARY_BREED = first(SECONDARY_BREED),",
+						"          SOURCE_FILE_NAME = first(SOURCE_FILE_NAME),",
+						"          LOAD_TIMESTAMP = first(LOAD_TIMESTAMP)) ~> aggregate1",
+						"stagepet derive(BREED_ID = sha2(256, concat(\r",
+						"    coalesce(SPECIES, ''),\r",
+						"    '-',\r",
+						"    coalesce(PRIMARY_BREED, ''),\r",
+						"    '-',\r",
+						"    coalesce(SECONDARY_BREED, '')\r",
+						"))) ~> BreedID",
+						"aggregate1, BreedDim join(aggregate1@BREED_ID == BreedDim@BREED_ID,",
+						"     joinType:'left',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"join1 alterRow(insertIf(isNull(BREED_KEY)),",
+						"     updateIf(!isNull(BREED_KEY))) ~> alterRow1",
+						"alterRow1 sink(allowSchemaDrift: true,",
+						"     validateSchema: true,",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:true,",
+						"     upsertable:false,",
+						"     keys:['BREED_ID'],",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     stageInsert: true,",
+						"     mapColumn(",
+						"          BREED_ID = aggregate1@BREED_ID,",
+						"          SPECIES,",
+						"          PRIMARY_BREED = aggregate1@PRIMARY_BREED,",
+						"          SECONDARY_BREED = aggregate1@SECONDARY_BREED,",
+						"          SOURCE_FILE_NAME = aggregate1@SOURCE_FILE_NAME,",
+						"          LOAD_TIMESTAMP = aggregate1@LOAD_TIMESTAMP",
+						"     )) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ls_snowflake_pet')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/Customer_Dataflow')]",
@@ -1690,6 +1914,7 @@
 						"     insertable:true,",
 						"     updateable:false,",
 						"     upsertable:false,",
+						"     truncate:true,",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
@@ -1710,6 +1935,7 @@
 						"     insertable:true,",
 						"     updateable:false,",
 						"     upsertable:false,",
+						"     truncate:true,",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
