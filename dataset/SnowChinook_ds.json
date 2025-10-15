@@ -13,6 +13,9 @@
 				"type": "string"
 			}
 		},
+		"folder": {
+			"name": "Chinook_Abhishek"
+		},
 		"annotations": [],
 		"type": "SnowflakeV2Table",
 		"schema": [],

@@ -16,6 +16,9 @@
 				"type": "string"
 			}
 		},
+		"folder": {
+			"name": "Chinook_Abhishek"
+		},
 		"annotations": [],
 		"type": "Parquet",
 		"typeProperties": {

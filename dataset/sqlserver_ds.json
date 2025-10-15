@@ -49,6 +49,9 @@
 				"defaultValue": "sqlserver-db-fall2025"
 			}
 		},
+		"folder": {
+			"name": "Chinook_Abhishek"
+		},
 		"annotations": [],
 		"type": "SqlServerTable",
 		"schema": [],

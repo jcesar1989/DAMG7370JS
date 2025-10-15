@@ -1,6 +1,9 @@
 {
 	"name": "Load_Customer_DIM_df",
 	"properties": {
+		"folder": {
+			"name": "Chinook_Abhishek"
+		},
 		"type": "MappingDataFlow",
 		"typeProperties": {
 			"sources": [

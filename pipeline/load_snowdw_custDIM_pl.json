@@ -41,8 +41,11 @@
 				}
 			}
 		],
+		"folder": {
+			"name": "Chinook_Abhishek"
+		},
 		"annotations": [],
-		"lastPublishTime": "2025-10-13T22:35:50Z"
+		"lastPublishTime": "2025-10-14T23:24:32Z"
 	},
 	"type": "Microsoft.DataFactory/factories/pipelines"
 }
