@@ -1,0 +1,78 @@
+{
+	"name": "SnowPetLoad_Abhishek_pl",
+	"properties": {
+		"activities": [
+			{
+				"name": "snowpetstageload",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"sink": {
+						"type": "SnowflakeV2Sink",
+						"importSettings": {
+							"type": "SnowflakeImportCopyCommand",
+							"additionalCopyOptions": {
+								"ON_ERROR": "CONTINUE"
+							},
+							"additionalFormatOptions": {
+								"ERROR_ON_COLUMN_COUNT_MISMATCH": "FALSE"
+							}
+						}
+					},
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "ls_storage_sas_auth",
+							"type": "LinkedServiceReference"
+						},
+						"path": "stagedata"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "parquet_Abhishek_ds",
+						"type": "DatasetReference",
+						"parameters": {
+							"container_name": "stagedata",
+							"folder_name": "pet",
+							"file_name": "petlicense.parquet"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "SnowPet_Abhishek_ds",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema_name": "STAGE",
+							"table_name": "PET_LICENSE"
+						}
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Team_Project_Pet/PL_Test"
+		},
+		"annotations": []
+	}
+}
