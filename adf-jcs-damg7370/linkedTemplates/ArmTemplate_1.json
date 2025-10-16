@@ -513,7 +513,7 @@
 							"scripts": [
 								{
 									"type": "Query",
-									"text": "\r\n\r\nMERGE INTO PET_DB.DW.LOCATION_DIM AS TGT\r\nUSING (\r\n    SELECT DISTINCT\r\n        CONCAT(STATE_FIPS, '-', ZIPCODE) AS LOCATION_ID,\r\n        STATE_FIPS,\r\n        STATE_ABBR,\r\n        STATE,\r\n        ZIPCODE,\r\n        COUNTY,\r\n        CITY,\r\n        LOAD_TIMESTAMP,\r\n        SOURCE_FILE_NAME\r\n    FROM PET_DB.STAGE.LOCATION\r\n    WHERE STATE_FIPS IS NOT NULL \r\n      AND CITY IS NOT NULL\r\n) AS SRC\r\nON TGT.LOCATION_ID = SRC.LOCATION_ID\r\n\r\n-- Update existing records\r\nWHEN MATCHED THEN UPDATE SET\r\n    TGT.STATE_FIPS = SRC.STATE_FIPS,\r\n    TGT.STATE_ABBR = SRC.STATE_ABBR,\r\n    TGT.STATE = SRC.STATE,\r\n    TGT.ZIPCODE = SRC.ZIPCODE,\r\n    TGT.COUNTY = SRC.COUNTY,\r\n    TGT.CITY = SRC.CITY,\r\n    TGT.SOURCE_FILE_NAME = SRC.SOURCE_FILE_NAME\r\n\r\n-- Insert new records\r\nWHEN NOT MATCHED THEN\r\n    INSERT (\r\n        LOCATION_ID,\r\n        STATE_FIPS,\r\n        STATE_ABBR,\r\n        STATE,\r\n        ZIPCODE,\r\n        COUNTY,\r\n        CITY,\r\n        LOAD_TIMESTAMP,\r\n        SOURCE_FILE_NAME\r\n    )\r\n    VALUES (\r\n        SRC.LOCATION_ID,\r\n        SRC.STATE_FIPS,\r\n        SRC.STATE_ABBR,\r\n        SRC.STATE,\r\n        SRC.ZIPCODE,\r\n        SRC.COUNTY,\r\n        SRC.CITY,\r\n        SRC.LOAD_TIMESTAMP,\r\n        SRC.SOURCE_FILE_NAME\r\n    );\r\n\r\n"
+									"text": "\r\n\r\nMERGE INTO PET_DB.DW.LOCATION_DIM AS TGT\r\nUSING (\r\n    SELECT \r\n        CONCAT(STATE_FIPS, '-', ZIPCODE) AS LOCATION_ID,\r\n        STATE_FIPS,\r\n        STATE_ABBR,\r\n        STATE,\r\n        ZIPCODE,\r\n        COUNTY,\r\n        CITY,\r\n        LOAD_TIMESTAMP,\r\n        SOURCE_FILE_NAME\r\n    FROM PET_DB.STAGE.LOCATION\r\n) AS SRC\r\nON TGT.LOCATION_ID = SRC.LOCATION_ID\r\n\r\n-- Update existing records\r\nWHEN MATCHED THEN UPDATE SET\r\n    TGT.STATE_FIPS = SRC.STATE_FIPS,\r\n    TGT.STATE_ABBR = SRC.STATE_ABBR,\r\n    TGT.STATE = SRC.STATE,\r\n    TGT.ZIPCODE = SRC.ZIPCODE,\r\n    TGT.COUNTY = SRC.COUNTY,\r\n    TGT.CITY = SRC.CITY,\r\n    TGT.SOURCE_FILE_NAME = SRC.SOURCE_FILE_NAME\r\n\r\n-- Insert new records\r\nWHEN NOT MATCHED THEN\r\n    INSERT (\r\n        LOCATION_ID,\r\n        STATE_FIPS,\r\n        STATE_ABBR,\r\n        STATE,\r\n        ZIPCODE,\r\n        COUNTY,\r\n        CITY,\r\n        LOAD_TIMESTAMP,\r\n        SOURCE_FILE_NAME\r\n    )\r\n    VALUES (\r\n        SRC.LOCATION_ID,\r\n        SRC.STATE_FIPS,\r\n        SRC.STATE_ABBR,\r\n        SRC.STATE,\r\n        SRC.ZIPCODE,\r\n        SRC.COUNTY,\r\n        SRC.CITY,\r\n        SRC.LOAD_TIMESTAMP,\r\n        SRC.SOURCE_FILE_NAME\r\n    );\r\n\r\n"
 								}
 							],
 							"scriptBlockExecutionTimeout": "02:00:00"
@@ -564,6 +564,48 @@
 								"computeType": "General"
 							},
 							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Fact_load",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "BreedDimDataflow",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "ls_snowflake_pet",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"Account": "QLHNMEQ-RTA20152",
+								"Database": "pet_db",
+								"Warehouse": "COMPUTE_WH",
+								"Username": "SEPULVEDAJU",
+								"Role": "ACCOUNTADMIN",
+								"Host": "QLHNMEQ-RTA20152.snowflakecomputing.com",
+								"Schema": "DW"
+							}
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "-- MERGE into PETLICENSE_FACT from stage tables\r\nMERGE INTO PET_DB.DW.PETLICENSE_FACT AS target\r\nUSING (\r\n    SELECT \r\n        stg.LICENSE_NUMBER,\r\n        dd.DATE_KEY AS LICENSE_ISSUE_DATE_KEY,\r\n        bd.BREED_KEY,\r\n        ld.LOCATION_KEY,\r\n        1 AS LICENSE_COUNT,\r\n        stg.SOURCE_FILE_NAME\r\n    FROM PET_DB.STAGE.PET_LICENSE stg\r\n    INNER JOIN PET_DB.DW.DATE_DIM dd \r\n        ON stg.LICENSE_ISSUE_DATE = dd.FULL_DATE\r\n    INNER JOIN PET_DB.DW.BREED_DIM bd \r\n        ON stg.PRIMARY_BREED = bd.PRIMARY_BREED \r\n        AND COALESCE(stg.SECONDARY_BREED, '') = COALESCE(bd.SECONDARY_BREED, '')\r\n    INNER JOIN PET_DB.DW.LOCATION_DIM ld \r\n        ON stg.ZIP_CODE = ld.ZIPCODE\r\n    WHERE stg.LICENSE_NUMBER IS NOT NULL\r\n) AS source\r\nON target.LICENSE_NUMBER = source.LICENSE_NUMBER\r\nWHEN MATCHED THEN\r\n    UPDATE SET\r\n        target.LICENSE_ISSUE_DATE_KEY = source.LICENSE_ISSUE_DATE_KEY,\r\n        target.BREED_KEY = source.BREED_KEY,\r\n        target.LOCATION_KEY = source.LOCATION_KEY,\r\n        target.LICENSE_COUNT = source.LICENSE_COUNT,\r\n        target.LOAD_TIMESTAMP = CURRENT_TIMESTAMP(),\r\n        target.SOURCE_FILE_NAME = source.SOURCE_FILE_NAME\r\nWHEN NOT MATCHED THEN\r\n    INSERT (\r\n        LICENSE_NUMBER,\r\n        LICENSE_ISSUE_DATE_KEY,\r\n        BREED_KEY,\r\n        LOCATION_KEY,\r\n        LICENSE_COUNT,\r\n        LOAD_TIMESTAMP,\r\n        SOURCE_FILE_NAME\r\n    )\r\n    VALUES (\r\n        source.LICENSE_NUMBER,\r\n        source.LICENSE_ISSUE_DATE_KEY,\r\n        source.BREED_KEY,\r\n        source.LOCATION_KEY,\r\n        source.LICENSE_COUNT,\r\n        CURRENT_TIMESTAMP(),\r\n        source.SOURCE_FILE_NAME\r\n    );\r\n\r\n"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
 						}
 					}
 				],
