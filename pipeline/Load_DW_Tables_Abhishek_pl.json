@@ -1,5 +1,5 @@
 {
-	"name": "DIM_DATE_and_LOCATION_DIM_load_Abhishek",
+	"name": "Load_DW_Tables_Abhishek_pl",
 	"properties": {
 		"activities": [
 			{
@@ -55,7 +55,73 @@
 					"scripts": [
 						{
 							"type": "Query",
-							"text": "\n\nMERGE INTO PET_DB.DW.LOCATION_DIM AS TGT\nUSING (\n    SELECT DISTINCT\n        CONCAT(STATE_FIPS, '-', ZIPCODE) AS LOCATION_ID,\n        STATE_FIPS,\n        STATE_ABBR,\n        STATE,\n        ZIPCODE,\n        COUNTY,\n        CITY,\n        LOAD_TIMESTAMP,\n        'geo-data(in).csv' AS SOURCE_FILE_NAME\n    FROM PET_DB.STAGE.LOCATION\n    WHERE STATE_FIPS IS NOT NULL \n      AND CITY IS NOT NULL\n) AS SRC\nON TGT.LOCATION_ID = SRC.LOCATION_ID\n\n-- Update existing records\nWHEN MATCHED THEN UPDATE SET\n    TGT.STATE_FIPS = SRC.STATE_FIPS,\n    TGT.STATE_ABBR = SRC.STATE_ABBR,\n    TGT.STATE = SRC.STATE,\n    TGT.ZIPCODE = SRC.ZIPCODE,\n    TGT.COUNTY = SRC.COUNTY,\n    TGT.CITY = SRC.CITY,\n    TGT.SOURCE_FILE_NAME = SRC.SOURCE_FILE_NAME\n\n-- Insert new records\nWHEN NOT MATCHED THEN\n    INSERT (\n        LOCATION_ID,\n        STATE_FIPS,\n        STATE_ABBR,\n        STATE,\n        ZIPCODE,\n        COUNTY,\n        CITY,\n        LOAD_TIMESTAMP,\n        SOURCE_FILE_NAME\n    )\n    VALUES (\n        SRC.LOCATION_ID,\n        SRC.STATE_FIPS,\n        SRC.STATE_ABBR,\n        SRC.STATE,\n        SRC.ZIPCODE,\n        SRC.COUNTY,\n        SRC.CITY,\n        SRC.LOAD_TIMESTAMP,\n        SRC.SOURCE_FILE_NAME\n    );\n\n"
+							"text": "TRUNCATE TABLE PET_DB.DW.LOCATION_DIM;\n\nINSERT INTO PET_DB.DW.LOCATION_DIM\n(\n    LOCATION_ID,\n    STATE_FIPS,\n    STATE_ABBR,\n    STATE,\n    ZIPCODE,\n    COUNTY,\n    CITY,\n    LOAD_TIMESTAMP,\n    SOURCE_FILE_NAME\n)\nSELECT DISTINCT\n    CONCAT('53-', S.ZIP_CODE)             AS LOCATION_ID,       -- 53 = Washington FIPS\n    53                                   AS STATE_FIPS,\n    'WA'                                 AS STATE_ABBR,\n    'Washington'                         AS STATE,\n    S.ZIP_CODE                           AS ZIPCODE,\n    'King'                               AS COUNTY,\n    'Seattle'                            AS CITY,               -- City is known for this dataset\n    CURRENT_TIMESTAMP()                  AS LOAD_TIMESTAMP,     -- Tracks ETL load time\n    'Seattle_Pet_Licenses_20251015.csv'  AS SOURCE_FILE_NAME    -- Source tracking\nFROM PET_DB.STAGE.PET_LICENSE S\nWHERE S.ZIP_CODE IS NOT NULL;\n"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "Load_BREED_DIM",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "Load_LOCATION_DIM",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.00:10:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 60,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "ls_snow_pet",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "MERGE INTO PET_DB.DW.BREED_DIM AS TGT\r\nUSING (\r\n    SELECT DISTINCT\r\n        CONCAT(SPECIES, '-', PRIMARY_BREED, '-', COALESCE(SECONDARY_BREED, 'NA')) AS BREED_ID,\r\n        SPECIES,\r\n        PRIMARY_BREED,\r\n        SECONDARY_BREED,\r\n        LOAD_TIMESTAMP,\r\n        'Seattle_Pet_Licenses_20251015.csv' AS SOURCE_FILE_NAME\r\n    FROM PET_DB.STAGE.PET_LICENSE\r\n    WHERE PRIMARY_BREED IS NOT NULL\r\n) AS SRC\r\nON TGT.BREED_ID = SRC.BREED_ID\r\n\r\nWHEN MATCHED THEN UPDATE SET\r\n    TGT.SPECIES = SRC.SPECIES,\r\n    TGT.PRIMARY_BREED = SRC.PRIMARY_BREED,\r\n    TGT.SECONDARY_BREED = SRC.SECONDARY_BREED,\r\n    TGT.SOURCE_FILE_NAME = SRC.SOURCE_FILE_NAME,\r\n    TGT.LOAD_TIMESTAMP = SRC.LOAD_TIMESTAMP\r\n\r\nWHEN NOT MATCHED THEN\r\n    INSERT (\r\n        BREED_ID,\r\n        SPECIES,\r\n        PRIMARY_BREED,\r\n        SECONDARY_BREED,\r\n        LOAD_TIMESTAMP,\r\n        SOURCE_FILE_NAME\r\n    )\r\n    VALUES (\r\n        SRC.BREED_ID,\r\n        SRC.SPECIES,\r\n        SRC.PRIMARY_BREED,\r\n        SRC.SECONDARY_BREED,\r\n        SRC.LOAD_TIMESTAMP,\r\n        SRC.SOURCE_FILE_NAME\r\n    );\r\n"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "Load_PETLICENSE_FACT",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "Load_BREED_DIM",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.00:10:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 60,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "ls_snow_pet",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "MERGE INTO PET_DB.DW.PETLICENSE_FACT AS TGT\r\nUSING (\r\n    SELECT *\r\n    FROM (\r\n        SELECT\r\n            S.LICENSE_NUMBER,\r\n            D.DATE_KEY AS LICENSE_ISSUE_DATE_KEY,\r\n            B.BREED_KEY,\r\n            L.LOCATION_KEY,\r\n            1 AS LICENSE_COUNT,\r\n            S.LOAD_TIMESTAMP,\r\n            'Seattle_Pet_Licenses_20251015.csv' AS SOURCE_FILE_NAME,\r\n            ROW_NUMBER() OVER (PARTITION BY S.LICENSE_NUMBER ORDER BY S.LICENSE_NUMBER) AS rn\r\n        FROM PET_DB.STAGE.PET_LICENSE AS S\r\n        LEFT JOIN PET_DB.DW.DATE_DIM AS D\r\n            ON D.FULL_DATE = TO_DATE(S.LICENSE_ISSUE_DATE, 'MMMM DD, YYYY')\r\n        LEFT JOIN PET_DB.DW.BREED_DIM AS B\r\n            ON B.PRIMARY_BREED = S.PRIMARY_BREED\r\n           AND (B.SECONDARY_BREED = S.SECONDARY_BREED OR B.SECONDARY_BREED IS NULL)\r\n           AND B.SPECIES = S.SPECIES\r\n        LEFT JOIN PET_DB.DW.LOCATION_DIM AS L\r\n            ON TO_VARCHAR(L.ZIPCODE) = TRIM(S.ZIP_CODE)\r\n    )\r\n    QUALIFY rn = 1               -- keep one record per license number\r\n      AND LOCATION_KEY IS NOT NULL\r\n) AS SRC\r\nON TGT.LICENSE_NUMBER = SRC.LICENSE_NUMBER\r\nWHEN MATCHED THEN UPDATE SET\r\n    TGT.LICENSE_ISSUE_DATE_KEY = SRC.LICENSE_ISSUE_DATE_KEY,\r\n    TGT.BREED_KEY = SRC.BREED_KEY,\r\n    TGT.LOCATION_KEY = SRC.LOCATION_KEY,\r\n    TGT.LICENSE_COUNT = SRC.LICENSE_COUNT,\r\n    TGT.LOAD_TIMESTAMP = SRC.LOAD_TIMESTAMP,\r\n    TGT.SOURCE_FILE_NAME = SRC.SOURCE_FILE_NAME\r\nWHEN NOT MATCHED THEN\r\nINSERT (\r\n    LICENSE_NUMBER,\r\n    LICENSE_ISSUE_DATE_KEY,\r\n    BREED_KEY,\r\n    LOCATION_KEY,\r\n    LICENSE_COUNT,\r\n    LOAD_TIMESTAMP,\r\n    SOURCE_FILE_NAME\r\n)\r\nVALUES (\r\n    SRC.LICENSE_NUMBER,\r\n    SRC.LICENSE_ISSUE_DATE_KEY,\r\n    SRC.BREED_KEY,\r\n    SRC.LOCATION_KEY,\r\n    SRC.LICENSE_COUNT,\r\n    SRC.LOAD_TIMESTAMP,\r\n    SRC.SOURCE_FILE_NAME\r\n);\r\n"
 						}
 					],
 					"scriptBlockExecutionTimeout": "02:00:00"
