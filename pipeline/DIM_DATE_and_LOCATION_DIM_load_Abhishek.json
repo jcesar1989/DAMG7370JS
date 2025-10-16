@@ -1,0 +1,70 @@
+{
+	"name": "DIM_DATE_and_LOCATION_DIM_load_Abhishek",
+	"properties": {
+		"activities": [
+			{
+				"name": "Load_DIM_DATE",
+				"type": "Script",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:10:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 60,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "ls_snow_pet",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "USE SCHEMA DW;\r\nMERGE INTO DATE_DIM AS tgt\r\nUSING (\r\n    WITH DATE_RANGE AS (\r\n        SELECT \r\n            DATEADD(DAY, SEQ4(), '2010-01-01')::DATE AS FULL_DATE\r\n        FROM TABLE(GENERATOR(ROWCOUNT => 7305))  -- 20 years of dates (2010-2030)\r\n    )\r\n    SELECT \r\n        TO_NUMBER(TO_CHAR(FULL_DATE, 'YYYYMMDD')) AS DATE_KEY,\r\n        FULL_DATE,\r\n        DAYOFWEEK(FULL_DATE) AS DAY_OF_WEEK,\r\n        DAYNAME(FULL_DATE) AS DAY_NAME,\r\n        DAY(FULL_DATE) AS DAY_OF_MONTH,\r\n        DAYOFYEAR(FULL_DATE) AS DAY_OF_YEAR,\r\n        WEEKOFYEAR(FULL_DATE) AS WEEK_OF_YEAR,\r\n        MONTH(FULL_DATE) AS MONTH_NUMBER,\r\n        MONTHNAME(FULL_DATE) AS MONTH_NAME,\r\n        TO_CHAR(FULL_DATE, 'MON') AS MONTH_ABBR,\r\n        QUARTER(FULL_DATE) AS QUARTER,\r\n        CONCAT('Q', QUARTER(FULL_DATE)) AS QUARTER_NAME,\r\n        YEAR(FULL_DATE) AS YEAR,\r\n        CASE \r\n            WHEN MONTH(FULL_DATE) >= 7 THEN YEAR(FULL_DATE) + 1\r\n            ELSE YEAR(FULL_DATE)\r\n        END AS FISCAL_YEAR,\r\n        CASE WHEN DAYOFWEEK(FULL_DATE) IN (0, 6) THEN TRUE ELSE FALSE END AS IS_WEEKEND,\r\n        FALSE AS IS_HOLIDAY  -- Update manually or with holiday logic\r\n    FROM DATE_RANGE\r\n) AS src\r\nON tgt.DATE_KEY = src.DATE_KEY\r\nWHEN NOT MATCHED THEN\r\n    INSERT (\r\n        DATE_KEY,\r\n        FULL_DATE,\r\n        DAY_OF_WEEK,\r\n        DAY_NAME,\r\n        DAY_OF_MONTH,\r\n        DAY_OF_YEAR,\r\n        WEEK_OF_YEAR,\r\n        MONTH_NUMBER,\r\n        MONTH_NAME,\r\n        MONTH_ABBR,\r\n        QUARTER,\r\n        QUARTER_NAME,\r\n        YEAR,\r\n        FISCAL_YEAR,\r\n        IS_WEEKEND,\r\n        IS_HOLIDAY,\r\n        LOAD_TIMESTAMP,\r\n        SOURCE_FILE_NAME\r\n    )\r\n    VALUES (\r\n        src.DATE_KEY,\r\n        src.FULL_DATE,\r\n        src.DAY_OF_WEEK,\r\n        src.DAY_NAME,\r\n        src.DAY_OF_MONTH,\r\n        src.DAY_OF_YEAR,\r\n        src.WEEK_OF_YEAR,\r\n        src.MONTH_NUMBER,\r\n        src.MONTH_NAME,\r\n        src.MONTH_ABBR,\r\n        src.QUARTER,\r\n        src.QUARTER_NAME,\r\n        src.YEAR,\r\n        src.FISCAL_YEAR,\r\n        src.IS_WEEKEND,\r\n        src.IS_HOLIDAY,\r\n        CURRENT_TIMESTAMP(),\r\n        'ADF_DATE_DIM_LOAD'\r\n    );\r\n\r\n"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "Load_LOCATION_DIM",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "Load_DIM_DATE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.00:10:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 60,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "ls_snow_pet",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "\n\nMERGE INTO PET_DB.DW.LOCATION_DIM AS TGT\nUSING (\n    SELECT DISTINCT\n        CONCAT(STATE_FIPS, '-', ZIPCODE) AS LOCATION_ID,\n        STATE_FIPS,\n        STATE_ABBR,\n        STATE,\n        ZIPCODE,\n        COUNTY,\n        CITY,\n        LOAD_TIMESTAMP,\n        'geo-data(in).csv' AS SOURCE_FILE_NAME\n    FROM PET_DB.STAGE.LOCATION\n    WHERE STATE_FIPS IS NOT NULL \n      AND CITY IS NOT NULL\n) AS SRC\nON TGT.LOCATION_ID = SRC.LOCATION_ID\n\n-- Update existing records\nWHEN MATCHED THEN UPDATE SET\n    TGT.STATE_FIPS = SRC.STATE_FIPS,\n    TGT.STATE_ABBR = SRC.STATE_ABBR,\n    TGT.STATE = SRC.STATE,\n    TGT.ZIPCODE = SRC.ZIPCODE,\n    TGT.COUNTY = SRC.COUNTY,\n    TGT.CITY = SRC.CITY,\n    TGT.SOURCE_FILE_NAME = SRC.SOURCE_FILE_NAME\n\n-- Insert new records\nWHEN NOT MATCHED THEN\n    INSERT (\n        LOCATION_ID,\n        STATE_FIPS,\n        STATE_ABBR,\n        STATE,\n        ZIPCODE,\n        COUNTY,\n        CITY,\n        LOAD_TIMESTAMP,\n        SOURCE_FILE_NAME\n    )\n    VALUES (\n        SRC.LOCATION_ID,\n        SRC.STATE_FIPS,\n        SRC.STATE_ABBR,\n        SRC.STATE,\n        SRC.ZIPCODE,\n        SRC.COUNTY,\n        SRC.CITY,\n        SRC.LOAD_TIMESTAMP,\n        SRC.SOURCE_FILE_NAME\n    );\n\n"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			}
+		],
+		"folder": {
+			"name": "Team_Project_Pet/PL_Test_Abhishek"
+		},
+		"annotations": []
+	}
+}
