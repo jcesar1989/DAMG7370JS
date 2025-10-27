@@ -2,7 +2,9 @@
 	"name": "adf-jcs-damg7370",
 	"properties": {
 		"globalConfigurations": {
-			"PipelineBillingEnabled": "true"
+			"PipelineBillingEnabled": "true",
+			"factoryStagingLSReferenceName": "ls_storage_azure_blob",
+			"factoryStagingLSType": "LinkedServiceReference"
 		}
 	},
 	"location": "eastus2",
