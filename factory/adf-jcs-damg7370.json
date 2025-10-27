@@ -1,5 +1,10 @@
 {
 	"name": "adf-jcs-damg7370",
+	"properties": {
+		"globalConfigurations": {
+			"PipelineBillingEnabled": "true"
+		}
+	},
 	"location": "eastus2",
 	"identity": {
 		"type": "SystemAssigned",
