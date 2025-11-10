@@ -7,7 +7,7 @@
 				"type": "Copy",
 				"dependsOn": [
 					{
-						"activity": "csv2parque",
+						"activity": "csv2parqu",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -199,7 +199,7 @@
 				}
 			},
 			{
-				"name": "csv2parque",
+				"name": "csv2parqu",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
