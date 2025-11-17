@@ -1,5 +1,5 @@
 {
-	"name": "dataflow1",
+	"name": "Breed_Dim_Dataflow",
 	"properties": {
 		"type": "MappingDataFlow",
 		"typeProperties": {
@@ -84,8 +84,7 @@
 				"    coalesce(PRIMARY_BREED, ''),\r",
 				"    '-',\r",
 				"    coalesce(SECONDARY_BREED, '')\r",
-				"))\r",
-				") ~> BreedID",
+				"))) ~> BreedID",
 				"aggregate1, BreedDim join(aggregate1@BREED_ID == BreedDim@BREED_ID,",
 				"     joinType:'left',",
 				"     matchType:'exact',",
