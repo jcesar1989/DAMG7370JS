@@ -10,7 +10,8 @@
 				"Warehouse": "COMPUTE_WH",
 				"Username": "SEPULVEDAJU",
 				"Role": "ACCOUNTADMIN",
-				"Host": "QLHNMEQ-RTA20152.snowflakecomputing.com"
+				"Host": "QLHNMEQ-RTA20152.snowflakecomputing.com",
+				"Schema": "DW"
 			}
 		},
 		"parameters": {

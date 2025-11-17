@@ -1,0 +1,117 @@
+{
+	"name": "Breed_Dim_Dataflow",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ls_snowflake_pet",
+						"type": "DatasetReference"
+					},
+					"name": "stagepet"
+				},
+				{
+					"dataset": {
+						"referenceName": "ls_snowflake_pet",
+						"type": "DatasetReference"
+					},
+					"name": "BreedDim"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ls_snowflake_pet",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "aggregate1"
+				},
+				{
+					"name": "BreedID"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "alterRow1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          LICENSE_ID as decimal(38,0),",
+				"          LICENSE_ISSUE_DATE as date,",
+				"          LICENSE_NUMBER as string,",
+				"          ANIMAL_NAME as string,",
+				"          SPECIES as string,",
+				"          PRIMARY_BREED as string,",
+				"          SECONDARY_BREED as string,",
+				"          ZIP_CODE as string,",
+				"          LOAD_TIMESTAMP as timestamp,",
+				"          SOURCE_FILE_NAME as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     query: 'select * from STAGE.PET_LICENSE\\n',",
+				"     format: 'query') ~> stagepet",
+				"source(output(",
+				"          BREED_KEY as decimal(38,0),",
+				"          BREED_ID as string,",
+				"          SPECIES_NAME as string,",
+				"          PRIMARY_BREED as string,",
+				"          SECONDARY_BREED as string,",
+				"          LOAD_TIMESTAMP as timestamp,",
+				"          SOURCE_FILE_NAME as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     query: 'Select * from DW.BREED_DIM',",
+				"     format: 'query') ~> BreedDim",
+				"BreedID aggregate(groupBy(BREED_ID),",
+				"     SPECIES = first(SPECIES),",
+				"          PRIMARY_BREED = first(PRIMARY_BREED),",
+				"          SECONDARY_BREED = first(SECONDARY_BREED),",
+				"          SOURCE_FILE_NAME = first(SOURCE_FILE_NAME),",
+				"          LOAD_TIMESTAMP = first(LOAD_TIMESTAMP)) ~> aggregate1",
+				"stagepet derive(BREED_ID = sha2(256, concat(\r",
+				"    coalesce(SPECIES, ''),\r",
+				"    '-',\r",
+				"    coalesce(PRIMARY_BREED, ''),\r",
+				"    '-',\r",
+				"    coalesce(SECONDARY_BREED, '')\r",
+				"))) ~> BreedID",
+				"aggregate1, BreedDim join(aggregate1@BREED_ID == BreedDim@BREED_ID,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 alterRow(insertIf(isNull(BREED_KEY)),",
+				"     updateIf(!isNull(BREED_KEY))) ~> alterRow1",
+				"alterRow1 sink(allowSchemaDrift: true,",
+				"     validateSchema: true,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:true,",
+				"     upsertable:false,",
+				"     keys:['BREED_ID'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     stageInsert: true,",
+				"     mapColumn(",
+				"          BREED_ID = aggregate1@BREED_ID,",
+				"          SPECIES,",
+				"          PRIMARY_BREED = aggregate1@PRIMARY_BREED,",
+				"          SECONDARY_BREED = aggregate1@SECONDARY_BREED,",
+				"          SOURCE_FILE_NAME = aggregate1@SOURCE_FILE_NAME,",
+				"          LOAD_TIMESTAMP = aggregate1@LOAD_TIMESTAMP",
+				"     )) ~> sink1"
+			]
+		}
+	}
+}

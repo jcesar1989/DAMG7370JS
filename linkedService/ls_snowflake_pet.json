@@ -25,6 +25,10 @@
 			"Host": {
 				"type": "string",
 				"defaultValue": "QLHNMEQ-RTA20152.snowflakecomputing.com"
+			},
+			"Schema": {
+				"type": "string",
+				"defaultValue": "DW"
 			}
 		},
 		"annotations": [],
@@ -44,7 +48,8 @@
 					"type": "LinkedServiceReference"
 				},
 				"secretName": "snowflakechinook"
-			}
+			},
+			"schema": "@linkedService().Schema"
 		},
 		"version": "1.1"
 	},
